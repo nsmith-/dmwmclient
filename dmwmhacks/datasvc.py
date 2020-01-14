@@ -45,12 +45,13 @@ class DataSvc:
         )
 
     def __init__(self, client, **kwargs):
-        kwargs.update(DataSvc.defaults)
+        args = dict(DataSvc.defaults)
+        args.update(kwargs)
         self.client = client
-        self.baseurl = httpx.URL(kwargs['datasvc_base'])
-        self.jsonurl = self.baseurl.join('json/%s/' % kwargs['phedex_instance'])
-        self.xmlurl = self.baseurl.join('xml/%s/' % kwargs['phedex_instance'])
-        self.timeout = kwargs['datasvc_timeout']
+        self.baseurl = httpx.URL(args['datasvc_base'])
+        self.jsonurl = self.baseurl.join('json/%s/' % args['phedex_instance'])
+        self.xmlurl = self.baseurl.join('xml/%s/' % args['phedex_instance'])
+        self.timeout = args['datasvc_timeout']
 
     async def jsonmethod(self, method, **params):
         # TODO: respect timeout

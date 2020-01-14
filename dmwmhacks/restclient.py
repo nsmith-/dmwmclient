@@ -39,10 +39,11 @@ class RESTClient:
         )
 
     def __init__(self, **kwargs):
-        kwargs.update(RESTClient.defaults)
-        usercert = os.path.expanduser(kwargs['usercert'])
-        userkey = os.path.expanduser(kwargs['userkey'])
-        certdir = os.path.expanduser(kwargs['certdir'])
+        args = dict(RESTClient.defaults)
+        args.update(kwargs)
+        usercert = os.path.expanduser(args['usercert'])
+        userkey = os.path.expanduser(args['userkey'])
+        certdir = os.path.expanduser(args['certdir'])
         self.client = httpx.AsyncClient(
             backend='asyncio',
             cert=(usercert, userkey),

@@ -36,10 +36,11 @@ class Unified:
         )
 
     def __init__(self, client, **kwargs):
-        kwargs.update(Unified.defaults)
+        args = dict(Unified.defaults)
+        args.update(kwargs)
         self.client = client
-        self.baseurl = httpx.URL(kwargs['unified_base'])
-        self.timeout = kwargs['unified_timeout']
+        self.baseurl = httpx.URL(args['unified_base'])
+        self.timeout = args['unified_timeout']
 
     async def transfer_statuses(self):
         # TODO: respect timeout
