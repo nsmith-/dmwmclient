@@ -2,6 +2,19 @@ import httpx
 import pandas
 
 
+BLOCKARRIVE_BASISCODE = {
+    -6: 'no_source',
+    -5: 'no_link',
+    -4: 'auto_suspend',
+    -3: 'no_download_link',
+    -2: 'manual_suspend',
+    -1: 'block_open',
+    0: 'routed',
+    1: 'queue_full',
+    2: 'rerouting',
+}
+
+
 class DataSvc:
     '''PhEDEx datasvc REST API
 

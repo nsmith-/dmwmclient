@@ -1,5 +1,6 @@
 import asyncio
 from ..asyncutil import completed
+from ..datasvc import BLOCKARRIVE_BASISCODE
 import pandas
 
 
@@ -24,7 +25,6 @@ class UnifiedTransferStatus:
         return (datasets, info)
 
     def findincomplete(self, datasets, info):
-        print("Looking for incompletes in req#", info['id'], "created at", pandas.to_datetime(info['time_create'], unit='s'))
         for dataset, sites in datasets.items():
             for site, completion in sites.items():
                 if completion > 100.:
@@ -35,6 +35,7 @@ class UnifiedTransferStatus:
 
     async def investigate(self, after_time, dataset, site):
         ba = await self.datasvc.jsonmethod('blockarrive', dataset=dataset, to_node=site)
+        ba = ba['phedex']['block']
         return (dataset, site, ba)
 
     async def go(self):
@@ -45,3 +46,7 @@ class UnifiedTransferStatus:
             async for dataset, site, ba in completed(blockarrives):
                 if len(ba) == 0:
                     print("No blockarrives for incomplete dataset:", dataset, site)
+                else:
+                    basis = pandas.Series(b['destination'][0]['basis'] for b in ba).map(BLOCKARRIVE_BASISCODE)
+                    print("Request", info['id'], "dataset", dataset, "to site", site, "has basiscodes:")
+                    print(basis.value_counts())
