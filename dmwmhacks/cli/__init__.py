@@ -4,7 +4,7 @@ from ..datasvc import DataSvc
 from ..unified import Unified
 from .shell import Shell
 from .test import Test
-from .unifiedts import UnifiedTransferStatus
+from .unified import UnifiedTransferStatus
 
 
 def cli():
@@ -33,6 +33,7 @@ def cli():
             client=client,
             datasvc=datasvc,
             unified=unified,
+            args=args,
         )
     else:
         parser.parse_args(['-h'])

@@ -11,12 +11,19 @@ class UnifiedTransferStatus:
             'unifiedts',
             help='Check unified transfer status against phedex blockarrive'
         )
+        parser.add_argument(
+            '-s',
+            '--showstatus',
+            action='store_true',
+            help='Show status of ongoing requests (blockarrive basis codes)',
+        )
         parser.set_defaults(command=cls)
         return parser
 
-    def __init__(self, *, unified=None, datasvc=None, **_):
+    def __init__(self, *, unified=None, datasvc=None, args=None, **_):
         self.datasvc = datasvc
         self.unified = unified
+        self.args = args
         asyncio.run(self.go())
 
     async def addinfo(self, reqid, datasets):
@@ -45,8 +52,9 @@ class UnifiedTransferStatus:
             blockarrives = (self.investigate(*tup) for tup in self.findincomplete(datasets, info))
             async for dataset, site, ba in completed(blockarrives):
                 if len(ba) == 0:
-                    print("No blockarrives for incomplete dataset:", dataset, site)
+                    print("No blockarrives for (request, dataset, site):", info['id'], dataset, site)
                 else:
                     basis = pandas.Series(b['destination'][0]['basis'] for b in ba).map(BLOCKARRIVE_BASISCODE)
-                    print("Request", info['id'], "dataset", dataset, "to site", site, "has basiscodes:")
-                    print(basis.value_counts())
+                    if self.args.showstatus:
+                        print("Request", info['id'], "dataset", dataset, "to site", site, "has basiscodes:")
+                        print(basis.value_counts())
