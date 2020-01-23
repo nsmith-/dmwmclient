@@ -27,11 +27,11 @@ class Unified:
             unified_base=args.unified_base,
         )
 
-    def __init__(self, client, **kwargs):
-        args = dict(Unified.defaults)
-        args.update(kwargs)
+    def __init__(self, client, unified_base=None):
+        if unified_base is None:
+            unified_base = Unified.defaults['unified_base']
         self.client = client
-        self.baseurl = httpx.URL(args['unified_base'])
+        self.baseurl = httpx.URL(unified_base)
 
     async def transfer_statuses(self):
         res = await self.client.getjson(

@@ -8,7 +8,7 @@ class UnifiedTransferStatus:
     @classmethod
     def register(cls, subparsers):
         parser = subparsers.add_parser(
-            'unifiedts',
+            'unifiedtransferstatus',
             help='Check unified transfer status against phedex blockarrive'
         )
         parser.add_argument(

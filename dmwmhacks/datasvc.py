@@ -49,13 +49,15 @@ class DataSvc:
             phedex_instance=args.phedex_instance,
         )
 
-    def __init__(self, client, **kwargs):
-        args = dict(DataSvc.defaults)
-        args.update(kwargs)
+    def __init__(self, client, datasvc_base=None, phedex_instance=None):
+        if datasvc_base is None:
+            datasvc_base = DataSvc.defaults['datasvc_base']
+        if phedex_instance is None:
+            phedex_instance = DataSvc.defaults['phedex_instance']
         self.client = client
-        self.baseurl = httpx.URL(args['datasvc_base'])
-        self.jsonurl = self.baseurl.join('json/%s/' % args['phedex_instance'])
-        self.xmlurl = self.baseurl.join('xml/%s/' % args['phedex_instance'])
+        self.baseurl = httpx.URL(datasvc_base)
+        self.jsonurl = self.baseurl.join('json/%s/' % phedex_instance)
+        self.xmlurl = self.baseurl.join('xml/%s/' % phedex_instance)
 
     async def jsonmethod(self, method, **params):
         return await self.client.getjson(

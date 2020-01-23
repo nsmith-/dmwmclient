@@ -38,12 +38,16 @@ class RESTClient:
             certdir=args.certdir,
         )
 
-    def __init__(self, **kwargs):
-        args = dict(RESTClient.defaults)
-        args.update(kwargs)
-        usercert = os.path.expanduser(args['usercert'])
-        userkey = os.path.expanduser(args['userkey'])
-        certdir = os.path.expanduser(args['certdir'])
+    def __init__(self, usercert=None, userkey=None, certdir=None):
+        if usercert is None:
+            usercert = RESTClient.defaults['usercert']
+        if userkey is None:
+            userkey = RESTClient.defaults['userkey']
+        if certdir is None:
+            certdir = RESTClient.defaults['certdir']
+        usercert = os.path.expanduser(usercert)
+        userkey = os.path.expanduser(userkey)
+        certdir = os.path.expanduser(certdir)
         self.client = httpx.AsyncClient(
             backend='asyncio',
             cert=(usercert, userkey),
