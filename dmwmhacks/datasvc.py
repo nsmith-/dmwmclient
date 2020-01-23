@@ -23,7 +23,6 @@ class DataSvc:
     defaults = {
         'datasvc_base': 'https://cmsweb.cern.ch/phedex/datasvc/',
         'phedex_instance': 'prod',
-        'datasvc_timeout': 30,
     }
 
     @classmethod
@@ -40,12 +39,6 @@ class DataSvc:
             help='PhEDEx instance (default: %(default)s)',
             choices=['prod', 'dev', 'debug'],
         )
-        group.add_argument(
-            '--datasvc_timeout',
-            default=cls.defaults['datasvc_timeout'],
-            help='REST query timeout in seconds (default: %(default)s)',
-            type=int,
-        )
         return group
 
     @classmethod
@@ -54,7 +47,6 @@ class DataSvc:
             client,
             datasvc_base=args.datasvc_base,
             phedex_instance=args.phedex_instance,
-            datasvc_timeout=args.datasvc_timeout,
         )
 
     def __init__(self, client, **kwargs):
@@ -64,10 +56,8 @@ class DataSvc:
         self.baseurl = httpx.URL(args['datasvc_base'])
         self.jsonurl = self.baseurl.join('json/%s/' % args['phedex_instance'])
         self.xmlurl = self.baseurl.join('xml/%s/' % args['phedex_instance'])
-        self.timeout = args['datasvc_timeout']
 
     async def jsonmethod(self, method, **params):
-        # TODO: respect timeout
         return await self.client.getjson(
             url=self.jsonurl.join(method),
             params=params,
