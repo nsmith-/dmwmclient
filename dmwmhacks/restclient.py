@@ -58,18 +58,18 @@ class RESTClient:
             ),
         )
 
-    async def send(self, request):
-        return await self.client.send(request)
+    async def send(self, request, **args):
+        return await self.client.send(request, **args)
 
-    async def getjson(self, url, params=None):
+    async def getjson(self, url, params=None, timeout=None):
         req = httpx.Request(
             method='GET',
             url=url,
             params=params,
         )
-        res = await self.send(req)
+        res = await self.send(req, timeout=timeout)
         if res.status_code != 200:
-            raise IOError("Error while executing request %r" % req)
+            raise IOError("Error %d while executing request %r" % (res.status_code, req))
         try:
             resjson = res.json()
         except json.JSONDecodeError:
