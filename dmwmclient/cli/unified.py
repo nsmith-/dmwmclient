@@ -1,7 +1,12 @@
+import logging
 import asyncio
-from ..asyncutil import completed
+from functools import reduce
+from operator import add
 from ..datasvc import BLOCKARRIVE_BASISCODE
 import pandas
+
+
+logger = logging.getLogger(__name__)
 
 
 class UnifiedTransferStatus:
@@ -11,12 +16,6 @@ class UnifiedTransferStatus:
             'unifiedtransferstatus',
             help='Check unified transfer status against phedex blockarrive'
         )
-        parser.add_argument(
-            '-s',
-            '--showstatus',
-            action='store_true',
-            help='Show status of ongoing requests (blockarrive basis codes)',
-        )
         parser.set_defaults(command=cls)
         return parser
 
@@ -24,37 +23,42 @@ class UnifiedTransferStatus:
         self.datasvc = datasvc
         self.unified = unified
         self.args = args
-        asyncio.run(self.go())
+        print(asyncio.run(self.go()))
 
-    async def addinfo(self, reqid, datasets):
+    async def investigate(self, dataset, site, info):
+        ba = await self.datasvc.jsonmethod('blockarrive', dataset=dataset, to_node=site)
+        ba = ba['phedex']['block']
+        if len(ba) == 0:
+            logger.warning(f"No blockarrives for request ID {info['id']}, dataset {dataset} at {site}")
+            return []
+        basis = pandas.Series(b['destination'][0]['basis'] for b in ba).map(BLOCKARRIVE_BASISCODE)
+        codes = []
+        for code, count in basis.value_counts().items():
+            codes.append({
+                'request_id': info['id'],
+                'dataset': dataset,
+                'site': site,
+                'basiscode': code,
+                'count': count,
+            })
+        return codes
+
+    async def find_incomplete(self, reqid, datasets):
         info = await self.datasvc.jsonmethod('requestlist', request=reqid)
         info = info['phedex']['request'][0]
-        return (datasets, info)
-
-    def findincomplete(self, datasets, info):
+        tasks = []
         for dataset, sites in datasets.items():
             for site, completion in sites.items():
                 if completion > 100.:
-                    print("Overcomplete dataset:", dataset, site)
+                    logger.warning(f"Overcomplete dataset: {dataset} at {site}")
                 elif completion == 100.:
                     continue
-                yield info['time_create'], dataset, site
-
-    async def investigate(self, after_time, dataset, site):
-        ba = await self.datasvc.jsonmethod('blockarrive', dataset=dataset, to_node=site)
-        ba = ba['phedex']['block']
-        return (dataset, site, ba)
+                tasks.append(self.investigate(dataset, site, info))
+        return reduce(add, await asyncio.gather(*tasks), [])
 
     async def go(self):
-        pendingreq = await self.unified.transfer_statuses()
-        addinfos = (self.addinfo(reqid, ds) for reqid, ds in pendingreq.items())
-        async for datasets, info in completed(addinfos):
-            blockarrives = (self.investigate(*tup) for tup in self.findincomplete(datasets, info))
-            async for dataset, site, ba in completed(blockarrives):
-                if len(ba) == 0:
-                    print("No blockarrives for (request, dataset, site):", info['id'], dataset, site)
-                else:
-                    basis = pandas.Series(b['destination'][0]['basis'] for b in ba).map(BLOCKARRIVE_BASISCODE)
-                    if self.args.showstatus:
-                        print("Request", info['id'], "dataset", dataset, "to site", site, "has basiscodes:")
-                        print(basis.value_counts())
+        pendingrequests = await self.unified.transfer_statuses()
+        tasks = []
+        for reqid, datasets in pendingrequests.items():
+            tasks.append(self.find_incomplete(reqid, datasets))
+        return reduce(add, await asyncio.gather(*tasks), [])

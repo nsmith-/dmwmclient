@@ -1,4 +1,8 @@
+import logging
 import asyncio
+
+
+logger = logging.getLogger(__name__)
 
 
 class Test:
@@ -18,4 +22,5 @@ class Test:
 
     async def go(self):
         res = await self.datasvc.jsonmethod('bounce', asdf='hi there')
-        print("DataSvc bounce test:", res)
+        logging.info("DataSvc bounce test: %r" % res)
+        logging.debug("Debug message")
