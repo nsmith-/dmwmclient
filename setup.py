@@ -9,7 +9,7 @@ from setuptools import (
 
 
 about = {}
-with open(os.path.join("dmwmhacks", "version.py")) as f:
+with open(os.path.join("dmwmclient", "version.py")) as f:
     exec(f.read(), about)
 
 
@@ -17,21 +17,21 @@ needs_pytest = {"pytest", "test", "ptr"}.intersection(sys.argv)
 pytest_runner = ["pytest-runner"] if needs_pytest else []
 
 setup(
-    name="dmwmhacks",
+    name="dmwmclient",
     version=about["__version__"],
     packages=find_packages(),
     entry_points='''
         [console_scripts]
-        rundmwm=dmwmhacks.cli:cli
+        dmwm=dmwmclient.cli:cli
     ''',
     include_package_data=True,
-    description="Hacks and scripts",
+    description="client and scripts",
     long_description=open("README.md", "rb").read().decode("utf8", "ignore"),
     long_description_content_type="text/markdown",
     maintainer="Nick Smith",
     maintainer_email="nick.smith@cern.ch",
-    url="https://github.com/nsmith-/dmwmhacks",
-    download_url="https://github.com/nsmith-/dmwmhacks/releases",
+    url="https://github.com/nsmith-/dmwmclient",
+    download_url="https://github.com/nsmith-/dmwmclient/releases",
     license="BSD 3-clause",
     test_suite="tests",
     install_requires=[
