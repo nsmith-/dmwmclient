@@ -13,9 +13,6 @@ with open(os.path.join("dmwmclient", "version.py")) as f:
     exec(f.read(), about)
 
 
-needs_pytest = {"pytest", "test", "ptr"}.intersection(sys.argv)
-pytest_runner = ["pytest-runner"] if needs_pytest else []
-
 setup(
     name="dmwmclient",
     version=about["__version__"],
@@ -35,7 +32,7 @@ setup(
     license="BSD 3-clause",
     test_suite="tests",
     install_requires=["ipython", "httpx>=0.11", "pandas"],
-    setup_requires=["flake8"] + pytest_runner,
+    extras_require={"dev": ["flake8", "black", "pytest-asyncio"]},
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Science/Research",

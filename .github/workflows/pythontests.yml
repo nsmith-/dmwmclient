@@ -1,0 +1,57 @@
+name: pythontests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  # Run daily at 0:01 UTC
+  schedule:
+    - cron:  '1 0 * * *'
+
+jobs:
+  linter:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.6, 3.7]
+    name: linter - flake8 - python ${{ matrix.python-version }}
+    steps:
+    - uses: actions/checkout@master
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install -q -e .[dev]
+    - name: Lint with flake8
+      run: |
+        flake8 dmwmclient
+    - name: Check formatting with black
+      run: |
+        python -m black --check dmwmclient
+
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest]
+        python-version: [3.6, 3.7]
+    name: test - (${{ matrix.os }}) - python ${{ matrix.python-version }}
+    steps:
+    - uses: actions/checkout@master
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install -q -e .[dev]
+        python -m pip list
+    - name: Test with pytest
+      run: |
+        pytest
