@@ -5,9 +5,9 @@ from .unified import Unified
 from .dbs import DBS
 
 __all__ = [
-    '__version__',
-    'RESTClient',
-    'DataSvc',
-    'Unified',
-    'DBS',
+    "__version__",
+    "RESTClient",
+    "DataSvc",
+    "Unified",
+    "DBS",
 ]

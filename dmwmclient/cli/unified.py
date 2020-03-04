@@ -13,8 +13,8 @@ class UnifiedTransferStatus:
     @classmethod
     def register(cls, subparsers):
         parser = subparsers.add_parser(
-            'unifiedtransferstatus',
-            help='Check unified transfer status against phedex blockarrive'
+            "unifiedtransferstatus",
+            help="Check unified transfer status against phedex blockarrive",
         )
         parser.set_defaults(command=cls)
         return parser
@@ -26,32 +26,38 @@ class UnifiedTransferStatus:
         print(asyncio.run(self.go()))
 
     async def investigate(self, dataset, site, info):
-        ba = await self.datasvc.jsonmethod('blockarrive', dataset=dataset, to_node=site)
-        ba = ba['phedex']['block']
+        ba = await self.datasvc.jsonmethod("blockarrive", dataset=dataset, to_node=site)
+        ba = ba["phedex"]["block"]
         if len(ba) == 0:
-            logger.warning(f"No blockarrives for request ID {info['id']}, dataset {dataset} at {site}")
+            logger.warning(
+                f"No blockarrives for request ID {info['id']}, dataset {dataset} at {site}"
+            )
             return []
-        basis = pandas.Series(b['destination'][0]['basis'] for b in ba).map(BLOCKARRIVE_BASISCODE)
+        basis = pandas.Series(b["destination"][0]["basis"] for b in ba).map(
+            BLOCKARRIVE_BASISCODE
+        )
         codes = []
         for code, count in basis.value_counts().items():
-            codes.append({
-                'request_id': info['id'],
-                'dataset': dataset,
-                'site': site,
-                'basiscode': code,
-                'count': count,
-            })
+            codes.append(
+                {
+                    "request_id": info["id"],
+                    "dataset": dataset,
+                    "site": site,
+                    "basiscode": code,
+                    "count": count,
+                }
+            )
         return codes
 
     async def find_incomplete(self, reqid, datasets):
-        info = await self.datasvc.jsonmethod('requestlist', request=reqid)
-        info = info['phedex']['request'][0]
+        info = await self.datasvc.jsonmethod("requestlist", request=reqid)
+        info = info["phedex"]["request"][0]
         tasks = []
         for dataset, sites in datasets.items():
             for site, completion in sites.items():
-                if completion > 100.:
+                if completion > 100.0:
                     logger.warning(f"Overcomplete dataset: {dataset} at {site}")
-                elif completion == 100.:
+                elif completion == 100.0:
                     continue
                 tasks.append(self.investigate(dataset, site, info))
         return reduce(add, await asyncio.gather(*tasks), [])

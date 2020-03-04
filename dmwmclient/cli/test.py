@@ -8,10 +8,7 @@ logger = logging.getLogger(__name__)
 class Test:
     @classmethod
     def register(cls, subparsers):
-        parser = subparsers.add_parser(
-            'test',
-            help='Test connections'
-        )
+        parser = subparsers.add_parser("test", help="Test connections")
         parser.set_defaults(command=cls)
         return parser
 
@@ -21,6 +18,6 @@ class Test:
         asyncio.run(self.go())
 
     async def go(self):
-        res = await self.datasvc.jsonmethod('bounce', asdf='hi there')
+        res = await self.datasvc.jsonmethod("bounce", asdf="hi there")
         logging.info("DataSvc bounce test: %r" % res)
         logging.debug("Debug message")

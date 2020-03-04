@@ -3,41 +3,42 @@ import pandas
 
 
 BLOCKARRIVE_BASISCODE = {
-    -6: 'no_source',
-    -5: 'no_link',
-    -4: 'auto_suspend',
-    -3: 'no_download_link',
-    -2: 'manual_suspend',
-    -1: 'block_open',
-    0: 'routed',
-    1: 'queue_full',
-    2: 'rerouting',
+    -6: "no_source",
+    -5: "no_link",
+    -4: "auto_suspend",
+    -3: "no_download_link",
+    -2: "manual_suspend",
+    -1: "block_open",
+    0: "routed",
+    1: "queue_full",
+    2: "rerouting",
 }
 
 
 class DataSvc:
-    '''PhEDEx datasvc REST API
+    """PhEDEx datasvc REST API
 
     Full documentation at https://cmsweb.cern.ch/phedex/datasvc/doc
-    '''
+    """
+
     defaults = {
-        'datasvc_base': 'https://cmsweb.cern.ch/phedex/datasvc/',
-        'phedex_instance': 'prod',
+        "datasvc_base": "https://cmsweb.cern.ch/phedex/datasvc/",
+        "phedex_instance": "prod",
     }
 
     @classmethod
     def add_args(cls, parser):
-        group = parser.add_argument_group('PhEDEx datasvc config')
+        group = parser.add_argument_group("PhEDEx datasvc config")
         group.add_argument(
-            '--datasvc_base',
-            default=cls.defaults['datasvc_base'],
-            help='PhEDEx datasvc base URL with trailing slash (default: %(default)s)',
+            "--datasvc_base",
+            default=cls.defaults["datasvc_base"],
+            help="PhEDEx datasvc base URL with trailing slash (default: %(default)s)",
         )
         group.add_argument(
-            '--phedex_instance',
-            default=cls.defaults['phedex_instance'],
-            help='PhEDEx instance (default: %(default)s)',
-            choices=['prod', 'dev', 'debug'],
+            "--phedex_instance",
+            default=cls.defaults["phedex_instance"],
+            help="PhEDEx instance (default: %(default)s)",
+            choices=["prod", "dev", "debug"],
         )
         return group
 
@@ -51,27 +52,24 @@ class DataSvc:
 
     def __init__(self, client, datasvc_base=None, phedex_instance=None):
         if datasvc_base is None:
-            datasvc_base = DataSvc.defaults['datasvc_base']
+            datasvc_base = DataSvc.defaults["datasvc_base"]
         if phedex_instance is None:
-            phedex_instance = DataSvc.defaults['phedex_instance']
+            phedex_instance = DataSvc.defaults["phedex_instance"]
         self.client = client
         self.baseurl = httpx.URL(datasvc_base)
-        self.jsonurl = self.baseurl.join('json/%s/' % phedex_instance)
-        self.xmlurl = self.baseurl.join('xml/%s/' % phedex_instance)
+        self.jsonurl = self.baseurl.join("json/%s/" % phedex_instance)
+        self.xmlurl = self.baseurl.join("xml/%s/" % phedex_instance)
 
     async def jsonmethod(self, method, **params):
-        return await self.client.getjson(
-            url=self.jsonurl.join(method),
-            params=params,
-        )
+        return await self.client.getjson(url=self.jsonurl.join(method), params=params)
 
     def _format_dates(self, df, datecols):
         if df.size > 0:
-            df[datecols] = df[datecols].apply(lambda v: pandas.to_datetime(v, unit='s'))
+            df[datecols] = df[datecols].apply(lambda v: pandas.to_datetime(v, unit="s"))
         return df
 
     async def blockreplicas(self, **params):
-        '''Get block replicas as a pandas dataframe
+        """Get block replicas as a pandas dataframe
 
         Parameters
         ----------
@@ -99,13 +97,13 @@ class DataSvc:
         group          group name.  default is to return replicas for any group.
         show_dataset   y or n, default n. If y, show dataset information with
                         the blocks; if n, only show blocks
-        '''
-        resjson = await self.jsonmethod('blockreplicas', **params)
+        """
+        resjson = await self.jsonmethod("blockreplicas", **params)
         df = pandas.io.json.json_normalize(
-            resjson['phedex']['block'],
-            record_path='replica',
-            record_prefix='replica.',
-            meta=['bytes', 'files', 'name', 'id', 'is_open'],
+            resjson["phedex"]["block"],
+            record_path="replica",
+            record_prefix="replica.",
+            meta=["bytes", "files", "name", "id", "is_open"],
         )
-        self._format_dates(df, ['replica.time_create', 'replica.time_update'])
+        self._format_dates(df, ["replica.time_create", "replica.time_update"])
         return df
