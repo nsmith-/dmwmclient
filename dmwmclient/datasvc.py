@@ -1,5 +1,6 @@
 import httpx
 import pandas
+from .util import format_dates
 
 
 BLOCKARRIVE_BASISCODE = {
@@ -22,33 +23,11 @@ class DataSvc:
     """
 
     defaults = {
+        # PhEDEx datasvc base URL with trailing slash
         "datasvc_base": "https://cmsweb.cern.ch/phedex/datasvc/",
+        # Options: prod, dev, debug
         "phedex_instance": "prod",
     }
-
-    @classmethod
-    def add_args(cls, parser):
-        group = parser.add_argument_group("PhEDEx datasvc config")
-        group.add_argument(
-            "--datasvc_base",
-            default=cls.defaults["datasvc_base"],
-            help="PhEDEx datasvc base URL with trailing slash (default: %(default)s)",
-        )
-        group.add_argument(
-            "--phedex_instance",
-            default=cls.defaults["phedex_instance"],
-            help="PhEDEx instance (default: %(default)s)",
-            choices=["prod", "dev", "debug"],
-        )
-        return group
-
-    @classmethod
-    def from_cli(cls, client, args):
-        return cls(
-            client,
-            datasvc_base=args.datasvc_base,
-            phedex_instance=args.phedex_instance,
-        )
 
     def __init__(self, client, datasvc_base=None, phedex_instance=None):
         if datasvc_base is None:
@@ -62,11 +41,6 @@ class DataSvc:
 
     async def jsonmethod(self, method, **params):
         return await self.client.getjson(url=self.jsonurl.join(method), params=params)
-
-    def _format_dates(self, df, datecols):
-        if df.size > 0:
-            df[datecols] = df[datecols].apply(lambda v: pandas.to_datetime(v, unit="s"))
-        return df
 
     async def blockreplicas(self, **params):
         """Get block replicas as a pandas dataframe
@@ -105,5 +79,5 @@ class DataSvc:
             record_prefix="replica.",
             meta=["bytes", "files", "name", "id", "is_open"],
         )
-        self._format_dates(df, ["replica.time_create", "replica.time_update"])
+        format_dates(df, ["replica.time_create", "replica.time_update"])
         return df

@@ -3,6 +3,19 @@ from .restclient import RESTClient
 from .datasvc import DataSvc
 from .unified import Unified
 from .dbs import DBS
+from .reqmgr import ReqMgr
+from .dynamo import Dynamo
+
+
+class Client:
+    def __init__(self):
+        self.baseclient = RESTClient()
+        self.datasvc = DataSvc(self.baseclient)
+        self.unified = Unified(self.baseclient)
+        self.dbs = DBS(self.baseclient)
+        self.reqmgr = ReqMgr(self.baseclient)
+        self.dynamo = Dynamo(self.baseclient)
+
 
 __all__ = [
     "__version__",
@@ -10,4 +23,7 @@ __all__ = [
     "DataSvc",
     "Unified",
     "DBS",
+    "ReqMgr",
+    "Dynamo",
+    "Client",
 ]
