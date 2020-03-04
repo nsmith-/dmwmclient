@@ -78,7 +78,6 @@ class RESTClient:
 
     async def cern_sso_follow(self, result, host):
         '''Follow CERN SSO redirect, returning the result of the original request'''
-        await self.cern_sso_check(host)
         html = etree.HTML(result.content)
         link = [l for l in html.xpath('//a') if l.text == 'Sign in using your CERN Certificate']
         if len(link) == 1:
@@ -90,7 +89,7 @@ class RESTClient:
             url = result.url.join(html.xpath('body/form')[0].attrib['action'])
             data = {el.attrib['name']: el.attrib['value'] for el in html.xpath('body/form/input')}
             result = await self._client.post(url, data=data)
-            logger.debug("SSO cookie for %s: %r" % (host, dict(result.history[0].cookies)))
+            logger.debug('Received SSO cookie for %s: %r' % (host, dict(result.history[0].cookies)))
             self._ssoevents[host].set()
             del self._ssoevents[host]
             return result
@@ -100,9 +99,10 @@ class RESTClient:
             url = result.url.join(form[0].attrib['action'])
             data = {el.attrib['name']: el.attrib['value'] for el in html.xpath('body/form/input')}
             result = await self._client.post(url, data=data)
+            logger.debug('Received SSO cookie for %s: %r' % (host, dict(result.history[0].cookies)))
             return result
         logger.debug('Invalid SSO login page content:\n' + result.content.decode('ascii'))
-        raise RuntimeError("Could not parse CERN SSO login page (no sign-in link or auto-redirect found)")
+        raise RuntimeError('Could not parse CERN SSO login page (no sign-in link or auto-redirect found)')
 
     def build_request(self, **params):
         return self._client.build_request(**params)
@@ -114,14 +114,17 @@ class RESTClient:
             try:
                 result = await self._client.send(request, timeout=timeout)
                 if result.status_code == 200 and result.url.host == 'login.cern.ch':
+                    if await self.cern_sso_check(request.url.host):
+                        self._client.cookies.set_cookie_header(request)
+                        continue
                     result = await self.cern_sso_follow(result, request.url.host)
                 if result.status_code != 200:
-                    logging.warning("HTTP status code %d received while executing request %r" % (result.status_code, request))
+                    logging.warning('HTTP status code %d received while executing request %r' % (result.status_code, request))
                 return result
             except httpx.TimeoutException:
-                logging.warning("Timeout encountered while executing request %r" % request)
+                logging.warning('Timeout encountered while executing request %r' % request)
             retries -= 1
-        raise IOError("Exhausted %d retries while executing request %r" % (retries, request))
+        raise IOError('Exhausted %d retries while executing request %r' % (retries, request))
 
     async def getjson(self, url, params=None, timeout=None, retries=1):
         request = self.build_request(method='GET', url=url, params=params)
@@ -129,4 +132,4 @@ class RESTClient:
         try:
             return result.json()
         except json.JSONDecodeError:
-            raise IOError("Failed to decode json for request %r.\nContent start:", (request, result.content[:160]))
+            raise IOError('Failed to decode json for request %r.\nContent start:', (request, result.content[:160]))
