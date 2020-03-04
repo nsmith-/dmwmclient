@@ -1,6 +1,13 @@
 import os
+import logging
 import json
 import httpx
+import asyncio
+from lxml import etree
+from . import __version__
+
+
+logger = logging.getLogger(__name__)
 
 
 class RESTClient:
@@ -48,7 +55,8 @@ class RESTClient:
         usercert = os.path.expanduser(usercert)
         userkey = os.path.expanduser(userkey)
         certdir = os.path.expanduser(certdir)
-        self.client = httpx.AsyncClient(
+        self._ssoevents = {}
+        self._client = httpx.AsyncClient(
             backend='asyncio',
             cert=(usercert, userkey),
             verify=certdir,
@@ -56,22 +64,69 @@ class RESTClient:
                 10.,
                 read_timeout=30.,
             ),
+            headers=httpx.Headers({'User-Agent': f'python-dmwmclient/{__version__}'}),
         )
 
-    async def send(self, request, **args):
-        return await self.client.send(request, **args)
-
-    async def getjson(self, url, params=None, timeout=None):
-        req = httpx.Request(
-            method='GET',
-            url=url,
-            params=params,
-        )
-        res = await self.send(req, timeout=timeout)
-        if res.status_code != 200:
-            raise IOError("Error %d while executing request %r" % (res.status_code, req))
+    async def cern_sso_check(self, host):
+        '''Check if this host already has an SSO action in progress, and wait for it'''
         try:
-            resjson = res.json()
+            await self._ssoevents[host].wait()
+            return True
+        except KeyError:
+            pass
+        return False
+
+    async def cern_sso_follow(self, result, host):
+        '''Follow CERN SSO redirect, returning the result of the original request'''
+        await self.cern_sso_check(host)
+        html = etree.HTML(result.content)
+        link = [l for l in html.xpath('//a') if l.text == 'Sign in using your CERN Certificate']
+        if len(link) == 1:
+            logger.debug('Running first-time CERN SSO sign-in routine')
+            self._ssoevents[host] = asyncio.Event()
+            url = result.url.join(link[0].attrib['href'])
+            result = await self._client.get(url)
+            html = etree.HTML(result.content)
+            url = result.url.join(html.xpath('body/form')[0].attrib['action'])
+            data = {el.attrib['name']: el.attrib['value'] for el in html.xpath('body/form/input')}
+            result = await self._client.post(url, data=data)
+            logger.debug("SSO cookie for %s: %r" % (host, dict(result.history[0].cookies)))
+            self._ssoevents[host].set()
+            del self._ssoevents[host]
+            return result
+        form = html.xpath('body/form')
+        if len(form) == 1:
+            logger.debug('Following CERN SSO redirect')
+            url = result.url.join(form[0].attrib['action'])
+            data = {el.attrib['name']: el.attrib['value'] for el in html.xpath('body/form/input')}
+            result = await self._client.post(url, data=data)
+            return result
+        logger.debug('Invalid SSO login page content:\n' + result.content.decode('ascii'))
+        raise RuntimeError("Could not parse CERN SSO login page (no sign-in link or auto-redirect found)")
+
+    def build_request(self, **params):
+        return self._client.build_request(**params)
+
+    async def send(self, request, timeout=None, retries=1):
+        await self.cern_sso_check(request.url.host)
+        # Looking forward to https://github.com/encode/httpx/pull/784
+        while retries > 0:
+            try:
+                result = await self._client.send(request, timeout=timeout)
+                if result.status_code == 200 and result.url.host == 'login.cern.ch':
+                    result = await self.cern_sso_follow(result, request.url.host)
+                if result.status_code != 200:
+                    logging.warning("HTTP status code %d received while executing request %r" % (result.status_code, request))
+                return result
+            except httpx.TimeoutException:
+                logging.warning("Timeout encountered while executing request %r" % request)
+            retries -= 1
+        raise IOError("Exhausted %d retries while executing request %r" % (retries, request))
+
+    async def getjson(self, url, params=None, timeout=None, retries=1):
+        request = self.build_request(method='GET', url=url, params=params)
+        result = await self.send(request, timeout=timeout, retries=retries)
+        try:
+            return result.json()
         except json.JSONDecodeError:
-            raise IOError("Failed to decode json for request %r. Content start:", (req, res.content[:160]))
-        return resjson
+            raise IOError("Failed to decode json for request %r.\nContent start:", (request, result.content[:160]))

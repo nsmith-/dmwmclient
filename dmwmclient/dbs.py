@@ -40,12 +40,10 @@ class DBS:
         )
 
     async def pandasmethod(self, method, **params):
-        req = httpx.Request(
+        req = self.client.build_request(
             method='GET',
             url=self.baseurl.join(method),
             params=params,
         )
         res = await self.client.send(req, timeout=30)
-        if res.status_code != 200:
-            raise IOError("Error %d while executing request %r: %s" % (res.status_code, req, res.json()['message']))
         return pandas.read_json(res.content)

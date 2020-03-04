@@ -36,7 +36,7 @@ setup(
     test_suite="tests",
     install_requires=[
         "ipython",
-        "httpx==0.11",
+        "httpx>=0.11",
         "pandas",
     ],
     setup_requires=["flake8"] + pytest_runner,
