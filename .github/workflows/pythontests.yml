@@ -18,7 +18,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: [3.6, 3.7]
-    name: linter - flake8 - python ${{ matrix.python-version }}
+    name: Linter - python ${{ matrix.python-version }}
     steps:
     - uses: actions/checkout@master
     - name: Set up Python ${{ matrix.python-version }}
@@ -41,7 +41,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macOS-latest]
         python-version: [3.6, 3.7]
-    name: test - (${{ matrix.os }}) - python ${{ matrix.python-version }}
+    name: Test - (${{ matrix.os }}) - python ${{ matrix.python-version }}
     steps:
     - uses: actions/checkout@master
     - name: Set up Python ${{ matrix.python-version }}
