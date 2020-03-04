@@ -11,7 +11,7 @@ Developer installation:
 ```
 git clone git@github.com:nsmith-/dmwmclient.git
 cd dmwmclient
-pip3 install -e .
+pip3 install -e .[dev]
 ```
 
 Usage
