@@ -8,22 +8,9 @@ class Unified:
     """
 
     defaults = {
+        # Unified base URL with trailing slash
         "unified_base": "https://cms-unified.web.cern.ch/cms-unified/",
     }
-
-    @classmethod
-    def add_args(cls, parser):
-        group = parser.add_argument_group("Unified API config")
-        group.add_argument(
-            "--unified_base",
-            default=cls.defaults["unified_base"],
-            help="Unified base URL with trailing slash (default: %(default)s)",
-        )
-        return group
-
-    @classmethod
-    def from_cli(cls, client, args):
-        return cls(client, unified_base=args.unified_base)
 
     def __init__(self, client, unified_base=None):
         if unified_base is None:

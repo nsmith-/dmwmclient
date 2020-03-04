@@ -12,34 +12,13 @@ logger = logging.getLogger(__name__)
 
 class RESTClient:
     defaults = {
+        # Location of user x509 certificate
         "usercert": "~/.globus/usercert.pem",
+        # Location of user x509 key
         "userkey": "~/.globus/userkey.pem",
+        # Location of trusted x509 certificates
         "certdir": os.getenv("X509_CERT_DIR", "/etc/grid-security/certificates"),
     }
-
-    @classmethod
-    def add_args(cls, parser):
-        group = parser.add_argument_group("REST Client config")
-        group.add_argument(
-            "--usercert",
-            default=cls.defaults["usercert"],
-            help="Location of user x509 certificate (default: %(default)s)",
-        )
-        group.add_argument(
-            "--userkey",
-            default=cls.defaults["userkey"],
-            help="Location of user x509 key (default: %(default)s)",
-        )
-        group.add_argument(
-            "--certdir",
-            default=cls.defaults["certdir"],
-            help="Location of trusted x509 certificates (default: $X509_CERT_DIR if set, else /etc/grid-security/certificates)",
-        )
-        return group
-
-    @classmethod
-    def from_cli(cls, args):
-        return cls(usercert=args.usercert, userkey=args.userkey, certdir=args.certdir)
 
     def __init__(self, usercert=None, userkey=None, certdir=None):
         if usercert is None:

@@ -19,10 +19,9 @@ class UnifiedTransferStatus:
         parser.set_defaults(command=cls)
         return parser
 
-    def __init__(self, *, unified=None, datasvc=None, args=None, **_):
-        self.datasvc = datasvc
-        self.unified = unified
-        self.args = args
+    def __init__(self, client):
+        self.datasvc = client.datasvc
+        self.unified = client.unified
         print(asyncio.run(self.go()))
 
     async def investigate(self, dataset, site, info):
