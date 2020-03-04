@@ -1,5 +1,6 @@
 import httpx
 import pandas
+from .util import format_dates
 
 
 BLOCKARRIVE_BASISCODE = {
@@ -63,11 +64,6 @@ class DataSvc:
     async def jsonmethod(self, method, **params):
         return await self.client.getjson(url=self.jsonurl.join(method), params=params)
 
-    def _format_dates(self, df, datecols):
-        if df.size > 0:
-            df[datecols] = df[datecols].apply(lambda v: pandas.to_datetime(v, unit="s"))
-        return df
-
     async def blockreplicas(self, **params):
         """Get block replicas as a pandas dataframe
 
@@ -105,5 +101,5 @@ class DataSvc:
             record_prefix="replica.",
             meta=["bytes", "files", "name", "id", "is_open"],
         )
-        self._format_dates(df, ["replica.time_create", "replica.time_update"])
+        format_dates(df, ["replica.time_create", "replica.time_update"])
         return df
