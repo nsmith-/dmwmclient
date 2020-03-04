@@ -20,10 +20,10 @@ setup(
     name="dmwmclient",
     version=about["__version__"],
     packages=find_packages(),
-    entry_points='''
+    entry_points="""
         [console_scripts]
         dmwm=dmwmclient.cli:cli
-    ''',
+    """,
     include_package_data=True,
     description="client and scripts",
     long_description=open("README.md", "rb").read().decode("utf8", "ignore"),
@@ -34,11 +34,7 @@ setup(
     download_url="https://github.com/nsmith-/dmwmclient/releases",
     license="BSD 3-clause",
     test_suite="tests",
-    install_requires=[
-        "ipython",
-        "httpx>=0.11",
-        "pandas",
-    ],
+    install_requires=["ipython", "httpx>=0.11", "pandas"],
     setup_requires=["flake8"] + pytest_runner,
     classifiers=[
         "Development Status :: 3 - Alpha",
