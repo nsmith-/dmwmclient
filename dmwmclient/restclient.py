@@ -10,30 +10,37 @@ from . import __version__
 logger = logging.getLogger(__name__)
 
 
+def _defaultcert():
+    path = os.getenv("X509_USER_PROXY")
+    if path is not None:
+        return path
+    path = "/tmp/x509up_u%d" % os.getuid()
+    if os.path.exists(path):
+        return path
+    return (
+        os.path.expanduser("~/.globus/usercert.pem"),
+        os.path.expanduser("~/.globus/userkey.pem"),
+    )
+
+
 class RESTClient:
     defaults = {
-        # Location of user x509 certificate
-        "usercert": "~/.globus/usercert.pem",
-        # Location of user x509 key
-        "userkey": "~/.globus/userkey.pem",
+        # Location of user x509 certificate, key pair
+        "usercert": _defaultcert(),
         # Location of trusted x509 certificates
         "certdir": os.getenv("X509_CERT_DIR", "/etc/grid-security/certificates"),
     }
 
-    def __init__(self, usercert=None, userkey=None, certdir=None):
+    def __init__(self, usercert=None, certdir=None):
         if usercert is None:
             usercert = RESTClient.defaults["usercert"]
-        if userkey is None:
-            userkey = RESTClient.defaults["userkey"]
         if certdir is None:
             certdir = RESTClient.defaults["certdir"]
-        usercert = os.path.expanduser(usercert)
-        userkey = os.path.expanduser(userkey)
         certdir = os.path.expanduser(certdir)
         self._ssoevents = {}
         self._client = httpx.AsyncClient(
             backend="asyncio",
-            cert=(usercert, userkey),
+            cert=usercert,
             verify=certdir,
             timeout=httpx.Timeout(10.0, read_timeout=30.0),
             headers=httpx.Headers({"User-Agent": f"python-dmwmclient/{__version__}"}),

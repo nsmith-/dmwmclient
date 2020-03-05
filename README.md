@@ -72,7 +72,7 @@ git clone git@github.com:nsmith-/dmwmclient.git
 cd dmwmclient
 pip3 install -e .[dev]
 # do some development
-python -m black dmwmclient
+black dmwmclient
 flake8 dmwmclient
 ```
 Please run the `flake8` linter and `black` code formatter before committing.
