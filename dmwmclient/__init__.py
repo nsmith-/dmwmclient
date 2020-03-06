@@ -5,6 +5,7 @@ from .unified import Unified
 from .dbs import DBS
 from .reqmgr import ReqMgr
 from .dynamo import Dynamo
+from .mcm import McM
 
 
 class Client:
@@ -15,6 +16,7 @@ class Client:
         self.dbs = DBS(self.baseclient)
         self.reqmgr = ReqMgr(self.baseclient)
         self.dynamo = Dynamo(self.baseclient)
+        self.mcm = McM(self.baseclient)
 
 
 __all__ = [
