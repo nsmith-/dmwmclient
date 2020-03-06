@@ -10,6 +10,17 @@ from . import __version__
 logger = logging.getLogger(__name__)
 
 
+def _proxycert():
+    """Find a user proxy"""
+    path = os.getenv("X509_USER_PROXY")
+    if path is not None:
+        return path
+    path = "/tmp/x509up_u%d" % os.getuid()
+    if os.path.exists(path):
+        return path
+    return None
+
+
 def _defaultcert():
     """Find a suitable user certificate from the usual locations
 
@@ -22,11 +33,8 @@ def _defaultcert():
     )
     if os.path.exists(path[0]) and os.path.exists(path[1]):
         return path
-    path = os.getenv("X509_USER_PROXY")
+    path = _proxycert()
     if path is not None:
-        return path
-    path = "/tmp/x509up_u%d" % os.getuid()
-    if os.path.exists(path):
         return path
     raise RuntimeError("Could not identify an appropriate default user certificate")
 

@@ -8,8 +8,8 @@ from .dynamo import Dynamo
 
 
 class Client:
-    def __init__(self):
-        self.baseclient = RESTClient()
+    def __init__(self, usercert=None):
+        self.baseclient = RESTClient(usercert=usercert)
         self.datasvc = DataSvc(self.baseclient)
         self.unified = Unified(self.baseclient)
         self.dbs = DBS(self.baseclient)
