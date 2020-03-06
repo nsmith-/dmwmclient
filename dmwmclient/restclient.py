@@ -11,16 +11,24 @@ logger = logging.getLogger(__name__)
 
 
 def _defaultcert():
+    """Find a suitable user certificate from the usual locations
+
+    Preference is given to original user certificate over a proxy
+    as this is necessary for use with CERN SSO.
+    """
+    path = (
+        os.path.expanduser("~/.globus/usercert.pem"),
+        os.path.expanduser("~/.globus/userkey.pem"),
+    )
+    if os.path.exists(path[0]) and os.path.exists(path[1]):
+        return path
     path = os.getenv("X509_USER_PROXY")
     if path is not None:
         return path
     path = "/tmp/x509up_u%d" % os.getuid()
     if os.path.exists(path):
         return path
-    return (
-        os.path.expanduser("~/.globus/usercert.pem"),
-        os.path.expanduser("~/.globus/userkey.pem"),
-    )
+    raise RuntimeError("Could not identify an appropriate default user certificate")
 
 
 class RESTClient:
@@ -68,6 +76,12 @@ class RESTClient:
             self._ssoevents[host] = asyncio.Event()
             url = result.url.join(link[0].attrib["href"])
             result = await self._client.get(url)
+            if not result.status_code == 200:
+                logger.debug("Return content:\n" + result.text)
+                raise IOError(
+                    "HTTP status code %d received while following SSO link to %r"
+                    % (result.status_code, url)
+                )
             html = etree.HTML(result.content)
             url = result.url.join(html.xpath("body/form")[0].attrib["action"])
             data = {
@@ -75,6 +89,12 @@ class RESTClient:
                 for el in html.xpath("body/form/input")
             }
             result = await self._client.post(url, data=data)
+            if not result.status_code == 200:
+                logger.debug("Return content:\n" + result.text)
+                raise IOError(
+                    "HTTP status code %d received while posting to SSO link %r"
+                    % (result.status_code, url)
+                )
             logger.debug(
                 "Received SSO cookie for %s: %r"
                 % (host, dict(result.history[0].cookies))
@@ -96,9 +116,7 @@ class RESTClient:
                 % (host, dict(result.history[0].cookies))
             )
             return result
-        logger.debug(
-            "Invalid SSO login page content:\n" + result.content.decode("ascii")
-        )
+        logger.debug("Invalid SSO login page content:\n" + result.text)
         raise RuntimeError(
             "Could not parse CERN SSO login page (no sign-in link or auto-redirect found)"
         )
@@ -138,7 +156,5 @@ class RESTClient:
         try:
             return result.json()
         except json.JSONDecodeError:
-            raise IOError(
-                "Failed to decode json for request %r.\nContent start:",
-                (request, result.content[:160]),
-            )
+            logging.debug("Result content: {result.text}")
+            raise IOError(f"Failed to decode json for request {request}")
