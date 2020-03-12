@@ -1,6 +1,7 @@
 import httpx
 import pandas
 import datetime
+from .util import format_dates
 
 
 class Dynamo:
@@ -23,6 +24,26 @@ class Dynamo:
             if cycle["partition_id"] == partition_id:
                 cycle["timestamp"] = datetime.datetime.fromtimestamp(cycle["timestamp"])
                 return cycle
+
+    async def detox_summary(self, cycle):
+        params = {"cycle": cycle}
+        result = await self.client.getjson(
+            self.baseurl.join("detox/summary"), params=params
+        )
+        df = pandas.io.json.json_normalize(
+            result["data"],
+            record_path="site_data",
+            meta=[
+                "comment",
+                "partition",
+                "cycle_timestamp",
+                "next_cycle",
+                "operation",
+                "previous_cycle",
+                "cycle",
+            ],
+        )
+        return format_dates(df, ["cycle_timestamp"])
 
     async def site_detail(self, site, cycle):
         """Get a dataframe of site usage from detox"""
