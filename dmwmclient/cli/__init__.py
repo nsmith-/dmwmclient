@@ -1,7 +1,7 @@
 import argparse
 import logging
 from .. import Client
-from ..restclient import _proxycert
+from ..restclient import locate_proxycert
 from .shell import Shell
 from .test import Test
 from .unified import UnifiedTransferStatus
@@ -30,7 +30,7 @@ def cli():
     loglevel = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
     logging.basicConfig(level=loglevel[min(2, args.verbose)])
 
-    client = Client(usercert=_proxycert() if args.proxy else None)
+    client = Client(usercert=locate_proxycert() if args.proxy else None)
 
     if hasattr(args, "command"):
         args.command(client=client)

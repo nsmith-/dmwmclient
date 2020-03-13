@@ -10,7 +10,7 @@ from . import __version__
 logger = logging.getLogger(__name__)
 
 
-def _proxycert():
+def locate_proxycert():
     """Find a user proxy"""
     path = os.getenv("X509_USER_PROXY")
     if path is not None:
@@ -33,7 +33,7 @@ def _defaultcert():
     )
     if os.path.exists(path[0]) and os.path.exists(path[1]):
         return path
-    path = _proxycert()
+    path = locate_proxycert()
     if path is not None:
         return path
     raise RuntimeError("Could not identify an appropriate default user certificate")
