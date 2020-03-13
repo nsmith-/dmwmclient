@@ -39,7 +39,6 @@ class RESTClient:
         certdir = os.path.expanduser(certdir)
         self._ssoevents = {}
         self._client = httpx.AsyncClient(
-            backend="asyncio",
             cert=usercert,
             verify=certdir,
             timeout=httpx.Timeout(10.0, read_timeout=30.0),
