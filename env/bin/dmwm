@@ -1,4 +1,4 @@
-#!/Users/jen_a/Fernando_Garzon/dmwmclient/env/bin/python3
+#!/afs/cern.ch/user/o/ogarzonm/dmwmclient/env/bin/python3
 # EASY-INSTALL-ENTRY-SCRIPT: 'dmwmclient','console_scripts','dmwm'
 __requires__ = 'dmwmclient'
 import re

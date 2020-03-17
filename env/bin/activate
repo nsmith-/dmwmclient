@@ -37,7 +37,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="/Users/jen_a/Fernando_Garzon/dmwmclient/env"
+VIRTUAL_ENV="/afs/cern.ch/user/o/ogarzonm/dmwmclient/env"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
