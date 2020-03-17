@@ -82,8 +82,33 @@ class DataSvc:
         format_dates(df, ["replica.time_create", "replica.time_update"])
         return df
     
-    async def blockarrive(self, **params):
+    async def nodes(self, **params):
         
-        cambios interesantes.
         
-        MAS CAMBIOS
+        
+        """Returns estimated time of arrival for blocks currently subscribed for transfer. If it cannot be calculated, or the 
+        block will never arrive, a reason for the missing estimate is provided.
+        
+        Parameters
+        ----------
+        id              block id
+        block           block name, could be multiple, could have wildcard
+        dataset         dataset name, could be multiple, could have wildcard
+        to_node         destination node, could be multiple, could have wildcard
+        priority        priority, could be multiple
+        update_since    updated since this time
+        basis           technique used for the ETA calculation, or reason it's missing - see below
+        arrive_before   only show blocks that are expected to arrive before this time
+        arrive_after    only show blocks that are expected to arrive after this time
+        
+        """
+        
+        resjson = await self.jsonmethod("nodes", **params)
+        df = pandas.io.json.json_normalize(
+            resjson["phedex"],
+            record_path="node",
+            record_prefix="node.",
+            
+        )
+        
+        return df
