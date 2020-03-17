@@ -81,3 +81,7 @@ class DataSvc:
         )
         format_dates(df, ["replica.time_create", "replica.time_update"])
         return df
+    
+    async def blockarrive(self, **params):
+        
+        cambios interesantes.
