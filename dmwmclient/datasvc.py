@@ -84,8 +84,61 @@ class DataSvc:
     
     async def nodes(self, **params):
         
+        """Returns a simple dump of phedex nodes.
         
+        Parameters
+        ----------
+        node     PhEDex node names to filter on, can be multiple (*)
+        noempty  filter out nodes which do not host any data
+        """
+        resjson = await self.jsonmethod("nodes", **params)
+        df = pandas.io.json.json_normalize(
+            resjson["phedex"],
+            record_path="node",
+            record_prefix="node.",
+            
+        )
         
+        return df
+    
+    async def data(self, params**):
+    
+        """Shows data which is registered (injected) to phedex
+        
+        Parameters
+        ----------
+        
+        dataset                  dataset name to output data for (wildcard support)
+        block                    block name to output data for (wildcard support)
+        file                     file name to output data for (wildcard support)
+        level                    display level, 'file' or 'block'. when level=block
+                                 no file details would be shown. Default is 'file'.
+                                 when level = 'block', return data of which blocks were created since this time;
+                                 when level = 'file', return data of which files were created since this time
+        create_since             when no parameters are given, default create_since is set to one day ago
+        """
+        resjson = await self.jsonmethod("data", **params)
+        out = []
+        for _instance in data['phedex']['dbs']:
+            for _dataset in _instance['dataset']:
+                for _block in _dataset['block']:
+                    for _file in _block['file']:
+                    out.append({
+                    'Dataset': _dataset['name'],
+                    'Is dataset open': _dataset['is_open'],
+                    'block Name': _block['name'],
+                    'Block size (GB)': _block['bytes']/1000000000.0,
+                    'Time block was created': _block['time_create'],
+                    'File name': _file['lfn'],
+                    'File checksum': _file['checksum'],
+                    'File size':  _file['size'],
+                    'Time file was created': _file['time_create']
+                    })
+        df = pandas.io.json.json_normalize(out)
+        format_dates(df, ["Time file was created",'Time block was created'])
+        return df
+    
+    #async def blockarrive(self,**params):
         """Returns estimated time of arrival for blocks currently subscribed for transfer. If it cannot be calculated, or the 
         block will never arrive, a reason for the missing estimate is provided.
         
@@ -103,12 +156,3 @@ class DataSvc:
         
         """
         
-        resjson = await self.jsonmethod("nodes", **params)
-        df = pandas.io.json.json_normalize(
-            resjson["phedex"],
-            record_path="node",
-            record_prefix="node.",
-            
-        )
-        
-        return df
