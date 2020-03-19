@@ -101,7 +101,7 @@ class DataSvc:
         
         return df
     
-    async def data(self, params**):
+    async def data(self, **params):
     
         """Shows data which is registered (injected) to phedex
         
@@ -119,20 +119,20 @@ class DataSvc:
         """
         resjson = await self.jsonmethod("data", **params)
         out = []
-        for _instance in data['phedex']['dbs']:
+        for _instance in resjson['phedex']['dbs']:
             for _dataset in _instance['dataset']:
                 for _block in _dataset['block']:
                     for _file in _block['file']:
-                    out.append({
-                    'Dataset': _dataset['name'],
-                    'Is dataset open': _dataset['is_open'],
-                    'block Name': _block['name'],
-                    'Block size (GB)': _block['bytes']/1000000000.0,
-                    'Time block was created': _block['time_create'],
-                    'File name': _file['lfn'],
-                    'File checksum': _file['checksum'],
-                    'File size':  _file['size'],
-                    'Time file was created': _file['time_create']
+                    	out.append({
+                    	'Dataset': _dataset['name'],
+                    	'Is dataset open': _dataset['is_open'],
+                    	'block Name': _block['name'],
+                    	'Block size (GB)': _block['bytes']/1000000000.0,
+                    	'Time block was created': _block['time_create'],
+                    	'File name': _file['lfn'],
+                    	'File checksum': _file['checksum'],
+                    	'File size':  _file['size'],
+                    	'Time file was created': _file['time_create']
                     })
         df = pandas.io.json.json_normalize(out)
         format_dates(df, ["Time file was created",'Time block was created'])
