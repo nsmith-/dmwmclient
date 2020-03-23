@@ -156,3 +156,41 @@ class DataSvc:
         
         """
         
+    async def errorlog(self, **params):
+        
+        """Return detailed transfer error information, including logs of the transfer and validation commands.
+        Note that phedex only stores the last 100 errors per link, so more errors may have occurred then indicated by this API 
+        call.
+        
+        Parameters
+        ----------
+        Required inputs: at least one of the followings: from, to, block, lfn
+        optional inputs: (as filters) from, to, dataset, block, lfn
+
+        from             name of the source node, could be multiple
+        to               name of the destination node, could be multiple
+        block            block name
+        dataset          dataset name
+        lfn              logical file name
+        """
+        
+        resjson = await self.jsonmethod("errorlog", **params)
+        out = []
+        for _instance in data['phedex']['link']:
+            for _block in _instance['block']:
+                for _file in _block['file']:
+                    for _transfer_error in _file['transfer_error']:
+                        out.append({
+                        'Link': _instance['from']+' to '+_instance['to'],
+                        'LFN': _file['name'],
+                        'file Checksum': _file['checksum'],
+                        'file size (GB)': _file['size']/1000000000.0,
+                        'Block name': _block['name'],
+                        'Error log': str(_transfer_error['detail_log']['$t']),
+                        'From PFN': _transfer_error['from_pfn'],
+                        'To PFN': _transfer_error['to_pfn'],
+                        'Time': _transfer_error['time_done']
+                        })
+        df = pandas.io.json.json_normalize(out)
+        format_dates(df, ["Time"])
+        return df
