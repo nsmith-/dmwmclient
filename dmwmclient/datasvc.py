@@ -194,3 +194,89 @@ class DataSvc:
         df = pandas.io.json.json_normalize(out)
         format_dates(df, ["Time"])
         return df
+    
+    async def blockarrive(self, **params):
+        
+        """Return estimated time of arrival for blocks currently subscribed for transfer. If the estimated time of arrival (ETA)
+        cannot be calculated, or the block will never arrive, a reason for the missing estimate is provided.
+        
+        Parameters
+        ----------
+        id                    block id
+        block                 block name, could be multiple, could have wildcard
+        dataset               dataset name, could be multiple, could have wildcard
+        to_node               destination node, could be multiple, could have wildcard
+        priority              priority, could be multiple
+        update_since          updated since this time
+        basis                 technique used for the ETA calculation, or reason it's missing.
+        arrive_before         only show blocks that are expected to arrive before this time.
+        arrive_after          only show blocks that are expected to arrive after this time.
+
+        """
+        
+        resjson = await self.jsonmethod("blockarrive", **params)
+        out = []
+        for _block in resjson['phedex']['block']:
+            for _destination in _block['destination']:
+                out.append({
+                'Block Name': _block['name'],
+                'Destination':_destination['name'],
+                'Time Arrive': _destination['time_arrive'],
+                'Time update':_destination['time_update'],
+                'Number of files':_destination['files'],
+                'Block size (GB)':_destination['bytes']/1000000000.0,
+                'Basis code':_destination['basis']
+                    })
+        df = pandas.io.json.json_normalize(out)
+        format_dates(df, ["Time Arrive",'Time update'])   
+        return df
+    
+    async def filereplicas(self,**params)
+    
+        """Serves the file replicas known to phedex.
+        
+        Parameters
+        ----------
+        block          block name, with '*' wildcards, can be multiple (*).  required when no lfn is specified. Block names must 
+                       follow the syntax /X/Y/Z#, i.e. have three /'s and a '#'. Anything else is rejected.
+        dataset        dataset name. Syntax: /X/Y/Z, all three /'s obligatory. Wildcads are allowed.
+        node           node name, can be multiple (*)
+        se             storage element name, can be multiple (*)
+        update_since   unix timestamp, only return replicas updated since this
+                time
+        create_since   unix timestamp, only return replicas created since this
+                       time
+        complete       y or n. if y, return only file replicas from complete block
+                       replicas.  if n only return file replicas from incomplete block
+                       replicas.  default is to return either.
+        dist_complete  y or n.  if y, return only file replicas from blocks
+                       where all file replicas are available at some node. if
+                       n, return only file replicas from blocks which have
+                       file replicas not available at any node.  default is
+                       to return either.
+        subscribed     y or n, filter for subscription. default is to return either.
+        custodial      y or n. filter for custodial responsibility.  default is
+                       to return either.
+        group          group name.  default is to return replicas for any group.
+        lfn            logical file name
+        """
+        resjson = await self.jsonmethod("filereplicas", **params)
+        out = []
+        for _block in resjson['phedex']['block']:
+            for _file in _block['file']:
+                for _replica in _file['replica']:
+                    out.append({
+                    'Block_name':_block['name'],
+                    'Files in block':_block['files'],
+                    'Block size (GB)':_block['bytes']/1000000000.0,
+                    'File name':_file['name'],
+                    'File checksum':_file['checksum'],
+                    'File created on':_file['time_create'],
+                    'File replica at':_replica['node'],
+                    'File subcribed?':_replica['subscribed'],
+                    'Custodial?':_replica['custodial'],
+                    'Group':_replica['group'],
+                    'File in node since':_replica['time_create']
+                    })
+        df=json_normalize(out)
+        format_dates(df, ["File created on",'File in node since'])        
