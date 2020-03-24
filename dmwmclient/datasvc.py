@@ -231,7 +231,7 @@ class DataSvc:
         format_dates(df, ["Time Arrive",'Time update'])   
         return df
     
-    async def filereplicas(self,**params)
+    async def filereplicas(self,**params):
     
         """Serves the file replicas known to phedex.
         
@@ -278,5 +278,5 @@ class DataSvc:
                     'Group':_replica['group'],
                     'File in node since':_replica['time_create']
                     })
-        df=json_normalize(out)
-        format_dates(df, ["File created on",'File in node since'])        
+        df=pandas.io.json.json_normalize(out)
+        return format_dates(df, ["File created on",'File in node since'])        
