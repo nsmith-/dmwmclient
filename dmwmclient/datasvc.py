@@ -81,9 +81,9 @@ class DataSvc:
         )
         format_dates(df, ["replica.time_create", "replica.time_update"])
         return df
-    
+
     async def nodes(self, **params):
-        
+
         """Returns a simple dump of phedex nodes.
         
         Parameters
@@ -93,16 +93,13 @@ class DataSvc:
         """
         resjson = await self.jsonmethod("nodes", **params)
         df = pandas.io.json.json_normalize(
-            resjson["phedex"],
-            record_path="node",
-            record_prefix="node.",
-            
+            resjson["phedex"], record_path="node", record_prefix="node.",
         )
-        
+
         return df
-    
+
     async def data(self, **params):
-    
+
         """Shows data which is registered (injected) to phedex
         
         Parameters
@@ -119,26 +116,28 @@ class DataSvc:
         """
         resjson = await self.jsonmethod("data", **params)
         out = []
-        for _instance in resjson['phedex']['dbs']:
-            for _dataset in _instance['dataset']:
-                for _block in _dataset['block']:
-                    for _file in _block['file']:
-                    	out.append({
-                    	'Dataset': _dataset['name'],
-                    	'Is dataset open': _dataset['is_open'],
-                    	'block Name': _block['name'],
-                    	'Block size (GB)': _block['bytes']/1000000000.0,
-                    	'Time block was created': _block['time_create'],
-                    	'File name': _file['lfn'],
-                    	'File checksum': _file['checksum'],
-                    	'File size':  _file['size'],
-                    	'Time file was created': _file['time_create']
-                    })
+        for _instance in resjson["phedex"]["dbs"]:
+            for _dataset in _instance["dataset"]:
+                for _block in _dataset["block"]:
+                    for _file in _block["file"]:
+                        out.append(
+                            {
+                                "Dataset": _dataset["name"],
+                                "Is dataset open": _dataset["is_open"],
+                                "block Name": _block["name"],
+                                "Block size (GB)": _block["bytes"] / 1000000000.0,
+                                "Time block was created": _block["time_create"],
+                                "File name": _file["lfn"],
+                                "File checksum": _file["checksum"],
+                                "File size": _file["size"],
+                                "Time file was created": _file["time_create"],
+                            }
+                        )
         df = pandas.io.json.json_normalize(out)
-        format_dates(df, ["Time file was created",'Time block was created'])
+        format_dates(df, ["Time file was created", "Time block was created"])
         return df
-    
-    #async def blockarrive(self,**params):
+
+        # async def blockarrive(self,**params):
         """Returns estimated time of arrival for blocks currently subscribed for transfer. If it cannot be calculated, or the 
         block will never arrive, a reason for the missing estimate is provided.
         
@@ -155,9 +154,9 @@ class DataSvc:
         arrive_after    only show blocks that are expected to arrive after this time
         
         """
-        
+
     async def errorlog(self, **params):
-        
+
         """Return detailed transfer error information, including logs of the transfer and validation commands.
         Note that phedex only stores the last 100 errors per link, so more errors may have occurred then indicated by this API 
         call.
@@ -173,30 +172,32 @@ class DataSvc:
         dataset          dataset name
         lfn              logical file name
         """
-        
+
         resjson = await self.jsonmethod("errorlog", **params)
         out = []
-        for _instance in resjson['phedex']['link']:
-            for _block in _instance['block']:
-                for _file in _block['file']:
-                    for _transfer_error in _file['transfer_error']:
-                        out.append({
-                        'Link': _instance['from']+' to '+_instance['to'],
-                        'LFN': _file['name'],
-                        'file Checksum': _file['checksum'],
-                        'file size (GB)': _file['size']/1000000000.0,
-                        'Block name': _block['name'],
-                        'Error log': str(_transfer_error['detail_log']['$t']),
-                        'From PFN': _transfer_error['from_pfn'],
-                        'To PFN': _transfer_error['to_pfn'],
-                        'Time': _transfer_error['time_done']
-                        })
+        for _instance in resjson["phedex"]["link"]:
+            for _block in _instance["block"]:
+                for _file in _block["file"]:
+                    for _transfer_error in _file["transfer_error"]:
+                        out.append(
+                            {
+                                "Link": _instance["from"] + " to " + _instance["to"],
+                                "LFN": _file["name"],
+                                "file Checksum": _file["checksum"],
+                                "file size (GB)": _file["size"] / 1000000000.0,
+                                "Block name": _block["name"],
+                                "Error log": str(_transfer_error["detail_log"]["$t"]),
+                                "From PFN": _transfer_error["from_pfn"],
+                                "To PFN": _transfer_error["to_pfn"],
+                                "Time": _transfer_error["time_done"],
+                            }
+                        )
         df = pandas.io.json.json_normalize(out)
         format_dates(df, ["Time"])
         return df
-    
+
     async def blockarrive(self, **params):
-        
+
         """Return estimated time of arrival for blocks currently subscribed for transfer. If the estimated time of arrival (ETA)
         cannot be calculated, or the block will never arrive, a reason for the missing estimate is provided.
         
@@ -213,26 +214,28 @@ class DataSvc:
         arrive_after          only show blocks that are expected to arrive after this time.
 
         """
-        
+
         resjson = await self.jsonmethod("blockarrive", **params)
         out = []
-        for _block in resjson['phedex']['block']:
-            for _destination in _block['destination']:
-                out.append({
-                'Block Name': _block['name'],
-                'Destination':_destination['name'],
-                'Time Arrive': _destination['time_arrive'],
-                'Time update':_destination['time_update'],
-                'Number of files':_destination['files'],
-                'Block size (GB)':_destination['bytes']/1000000000.0,
-                'Basis code':_destination['basis']
-                    })
+        for _block in resjson["phedex"]["block"]:
+            for _destination in _block["destination"]:
+                out.append(
+                    {
+                        "Block Name": _block["name"],
+                        "Destination": _destination["name"],
+                        "Time Arrive": _destination["time_arrive"],
+                        "Time update": _destination["time_update"],
+                        "Number of files": _destination["files"],
+                        "Block size (GB)": _destination["bytes"] / 1000000000.0,
+                        "Basis code": _destination["basis"],
+                    }
+                )
         df = pandas.io.json.json_normalize(out)
-        format_dates(df, ["Time Arrive",'Time update'])   
+        format_dates(df, ["Time Arrive", "Time update"])
         return df
-    
-    async def filereplicas(self,**params):
-    
+
+    async def filereplicas(self, **params):
+
         """Serves the file replicas known to phedex.
         
         Parameters
@@ -262,21 +265,23 @@ class DataSvc:
         """
         resjson = await self.jsonmethod("filereplicas", **params)
         out = []
-        for _block in resjson['phedex']['block']:
-            for _file in _block['file']:
-                for _replica in _file['replica']:
-                    out.append({
-                    'Block_name':_block['name'],
-                    'Files in block':_block['files'],
-                    'Block size (GB)':_block['bytes']/1000000000.0,
-                    'File name':_file['name'],
-                    'File checksum':_file['checksum'],
-                    'File created on':_file['time_create'],
-                    'File replica at':_replica['node'],
-                    'File subcribed?':_replica['subscribed'],
-                    'Custodial?':_replica['custodial'],
-                    'Group':_replica['group'],
-                    'File in node since':_replica['time_create']
-                    })
-        df=pandas.io.json.json_normalize(out)
-        return format_dates(df, ["File created on",'File in node since'])        
+        for _block in resjson["phedex"]["block"]:
+            for _file in _block["file"]:
+                for _replica in _file["replica"]:
+                    out.append(
+                        {
+                            "Block_name": _block["name"],
+                            "Files in block": _block["files"],
+                            "Block size (GB)": _block["bytes"] / 1000000000.0,
+                            "File name": _file["name"],
+                            "File checksum": _file["checksum"],
+                            "File created on": _file["time_create"],
+                            "File replica at": _replica["node"],
+                            "File subcribed?": _replica["subscribed"],
+                            "Custodial?": _replica["custodial"],
+                            "Group": _replica["group"],
+                            "File in node since": _replica["time_create"],
+                        }
+                    )
+        df = pandas.io.json.json_normalize(out)
+        return format_dates(df, ["File created on", "File in node since"])
