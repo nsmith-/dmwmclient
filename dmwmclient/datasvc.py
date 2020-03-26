@@ -85,7 +85,6 @@ class DataSvc:
     async def nodes(self, **params):
 
         """Returns a simple dump of phedex nodes.
-        
         Parameters
         ----------
         node     PhEDex node names to filter on, can be multiple (*)
@@ -101,10 +100,8 @@ class DataSvc:
     async def data(self, **params):
 
         """Shows data which is registered (injected) to phedex
-        
         Parameters
         ----------
-        
         dataset                  dataset name to output data for (wildcard support)
         block                    block name to output data for (wildcard support)
         file                     file name to output data for (wildcard support)
@@ -138,9 +135,8 @@ class DataSvc:
         return df
 
         # async def blockarrive(self,**params):
-        """Returns estimated time of arrival for blocks currently subscribed for transfer. If it cannot be calculated, or the 
+        """Returns estimated time of arrival for blocks currently subscribed for transfer. If it cannot be calculated, or the
         block will never arrive, a reason for the missing estimate is provided.
-        
         Parameters
         ----------
         id              block id
@@ -152,15 +148,13 @@ class DataSvc:
         basis           technique used for the ETA calculation, or reason it's missing - see below
         arrive_before   only show blocks that are expected to arrive before this time
         arrive_after    only show blocks that are expected to arrive after this time
-        
         """
 
     async def errorlog(self, **params):
 
         """Return detailed transfer error information, including logs of the transfer and validation commands.
-        Note that phedex only stores the last 100 errors per link, so more errors may have occurred then indicated by this API 
+        Note that phedex only stores the last 100 errors per link, so more errors may have occurred then indicated by this API
         call.
-        
         Parameters
         ----------
         Required inputs: at least one of the followings: from, to, block, lfn
@@ -200,7 +194,6 @@ class DataSvc:
 
         """Return estimated time of arrival for blocks currently subscribed for transfer. If the estimated time of arrival (ETA)
         cannot be calculated, or the block will never arrive, a reason for the missing estimate is provided.
-        
         Parameters
         ----------
         id                    block id
@@ -237,10 +230,9 @@ class DataSvc:
     async def filereplicas(self, **params):
 
         """Serves the file replicas known to phedex.
-        
         Parameters
         ----------
-        block          block name, with '*' wildcards, can be multiple (*).  required when no lfn is specified. Block names must 
+        block          block name, with '*' wildcards, can be multiple (*).  required when no lfn is specified. Block names must
                        follow the syntax /X/Y/Z#, i.e. have three /'s and a '#'. Anything else is rejected.
         dataset        dataset name. Syntax: /X/Y/Z, all three /'s obligatory. Wildcads are allowed.
         node           node name, can be multiple (*)
