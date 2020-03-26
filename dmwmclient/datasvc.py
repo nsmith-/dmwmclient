@@ -176,7 +176,7 @@ class DataSvc:
         
         resjson = await self.jsonmethod("errorlog", **params)
         out = []
-        for _instance in data['phedex']['link']:
+        for _instance in resjson['phedex']['link']:
             for _block in _instance['block']:
                 for _file in _block['file']:
                     for _transfer_error in _file['transfer_error']:
