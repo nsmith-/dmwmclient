@@ -277,3 +277,23 @@ class DataSvc:
                     )
         df = pandas.io.json.json_normalize(out)
         return format_dates(df, ["File created on", "File in node since"])
+    
+    
+    async def AgentLogs(self, **params):
+    """Show messages from the agents.
+    Parameters
+    ----------
+    required inputs: at least one of the optional inputs
+    optional inputs: (as filters) user, host, pid, agent, update_since
+
+    node              name of the node
+    user              user name who owns agent processes
+    host              hostname where agent runs
+    agent             name of the agent
+    pid               process id of agent
+    update_since      ower bound of time to show log messages. Default last 24 h.
+    """
+    resjson = await self.jsonmethod("AgentLogs", **params)
+    out = []
+    
+    
