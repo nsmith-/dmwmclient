@@ -5,7 +5,7 @@ Hacks and scripts to use in CMS DMWM dev/ops.
 
 ## Release installation
 ```
-pip3 install https://github.com/nsmith-/dmwmclient/archive/master.zip
+pip3 install https://github.com/nsmith-/dmwmclient/archive/v0.0.3.zip
 ```
 
 ## Usage
