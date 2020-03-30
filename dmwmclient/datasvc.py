@@ -231,7 +231,7 @@ class DataSvc:
         format_dates(df, ["Time Arrive",'Time update'])   
         return df
     
-    async def filereplicas(self,**params)
+    async def filereplicas(self,**params):
     
         """Serves the file replicas known to phedex.
         
