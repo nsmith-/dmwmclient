@@ -97,7 +97,7 @@ class DataSvc:
 
         return df
 
-    async def data(self, **params):
+    async def data(self,human_readable=None, **params):
 
         """Shows data which is registered (injected) to phedex
         Parameters
@@ -111,46 +111,60 @@ class DataSvc:
                                  when level = 'file', return data of which files were created since this time
         create_since             when no parameters are given, default create_since is set to one day ago
         """
-        resjson = await self.jsonmethod("data", **params)
-        out = []
-        for _instance in resjson["phedex"]["dbs"]:
-            for _dataset in _instance["dataset"]:
-                for _block in _dataset["block"]:
-                    for _file in _block["file"]:
-                        out.append(
-                            {
-                                "Dataset": _dataset["name"],
-                                "Is dataset open": _dataset["is_open"],
-                                "block Name": _block["name"],
-                                "Block size (GB)": _block["bytes"] / 1000000000.0,
-                                "Time block was created": _block["time_create"],
-                                "File name": _file["lfn"],
-                                "File checksum": _file["checksum"],
-                                "File size": _file["size"],
-                                "Time file was created": _file["time_create"],
-                            }
-                        )
-        df = pandas.io.json.json_normalize(out)
-        format_dates(df, ["Time file was created", "Time block was created"])
-        return df
+        if (human_readable==None or human_readable==False):
+            resjson = await self.jsonmethod("data", **params)
+            out = []
+            for _instance in resjson["phedex"]["dbs"]:
+                for _dataset in _instance["dataset"]:
+                    for _block in _dataset["block"]:
+                        for _file in _block["file"]:
+                            out.append(
+                                {
+                                    "Dataset": _dataset["name"],
+                                    "Is_dataset_open": _dataset["is_open"],
+                                    "block_Name": _block["name"],
+                                    "Block_size_(GB)": _block["bytes"] / 1000000000.0,
+                                    "Time_block_was_created": _block["time_create"],
+                                    "File_name": _file["lfn"],
+                                    "File_checksum": _file["checksum"],
+                                    "File_size": _file["size"],
+                                    "Time_file_was_created": _file["time_create"],
+                                }
+                            )
+            df = pandas.io.json.json_normalize(out)
+            format_dates(df, ["Time_file_was_created", "Time_block_was_created"])
+            return df
+        
+        elif (human_readable==True):
+            resjson = await self.jsonmethod("data", **params)
+            out = []
+            for _instance in resjson["phedex"]["dbs"]:
+                for _dataset in _instance["dataset"]:
+                    for _block in _dataset["block"]:
+                        for _file in _block["file"]:
+                            out.append(
+                                {
+                                    "Dataset": _dataset["name"],
+                                    "Is dataset open": _dataset["is_open"],
+                                    "block Name": _block["name"],
+                                    "Block size (GB)": _block["bytes"] / 1000000000.0,
+                                    "Time block was created": _block["time_create"],
+                                    "File name": _file["lfn"],
+                                    "File checksum": _file["checksum"],
+                                    "File size": _file["size"],
+                                    "Time file was created": _file["time_create"],
+                                }
+                            )
+            df = pandas.io.json.json_normalize(out)
+            format_dates(df, ["Time file was created", "Time block was created"])
+            return df
+        else:
+            print ('Wrong human_readable parameter type')
+            out=[]
+            df=pandas.io.json.json_normalize(out)
+            return df
 
-        # async def blockarrive(self,**params):
-        """Returns estimated time of arrival for blocks currently subscribed for transfer. If it cannot be calculated, or the
-        block will never arrive, a reason for the missing estimate is provided.
-        Parameters
-        ----------
-        id              block id
-        block           block name, could be multiple, could have wildcard
-        dataset         dataset name, could be multiple, could have wildcard
-        to_node         destination node, could be multiple, could have wildcard
-        priority        priority, could be multiple
-        update_since    updated since this time
-        basis           technique used for the ETA calculation, or reason it's missing - see below
-        arrive_before   only show blocks that are expected to arrive before this time
-        arrive_after    only show blocks that are expected to arrive after this time
-        """
-
-    async def errorlog(self, **params):
+    async def errorlog(self,human_readable=None, **params):
 
         """Return detailed transfer error information, including logs of the transfer and validation commands.
         Note that phedex only stores the last 100 errors per link, so more errors may have occurred then indicated by this API
@@ -166,28 +180,49 @@ class DataSvc:
         dataset          dataset name
         lfn              logical file name
         """
-
-        resjson = await self.jsonmethod("errorlog", **params)
         out = []
-        for _instance in resjson["phedex"]["link"]:
-            for _block in _instance["block"]:
-                for _file in _block["file"]:
-                    for _transfer_error in _file["transfer_error"]:
-                        out.append(
-                            {
-                                "Link": _instance["from"] + " to " + _instance["to"],
-                                "LFN": _file["name"],
-                                "file Checksum": _file["checksum"],
-                                "file size (GB)": _file["size"] / 1000000000.0,
-                                "Block name": _block["name"],
-                                "Error log": str(_transfer_error["detail_log"]["$t"]),
-                                "From PFN": _transfer_error["from_pfn"],
-                                "To PFN": _transfer_error["to_pfn"],
-                                "Time": _transfer_error["time_done"],
-                            }
-                        )
+        error_message=''
+        resjson = await self.jsonmethod("errorlog", **params)
+        if (human_readable==None or human_readable==False):
+            for _instance in resjson["phedex"]["link"]:
+                for _block in _instance["block"]:
+                    for _file in _block["file"]:
+                        for _transfer_error in _file["transfer_error"]:
+                            out.append(
+                                        {
+                                            "Link": _instance["from"] + " to " + _instance["to"],
+                                            "LFN": _file["name"],
+                                            "file_Checksum": _file["checksum"],
+                                            "file_size_(GB)": _file["size"] / 1000000000.0,
+                                            "Block_name": _block["name"],
+                                            "Error_log": str(_transfer_error["detail_log"]["$t"]),
+                                            "From_PFN": _transfer_error["from_pfn"],
+                                            "To_PFN": _transfer_error["to_pfn"],
+                                            "Time": _transfer_error["time_done"],
+                                        }
+                                )
+        elif(human_readable==True):
+            for _instance in resjson["phedex"]["link"]:
+                for _block in _instance["block"]:
+                    for _file in _block["file"]:
+                        for _transfer_error in _file["transfer_error"]:
+                            out.append(
+                                    {
+                                        "Link": _instance["from"] + " to " + _instance["to"],
+                                        "LFN": _file["name"],
+                                        "file Checksum": _file["checksum"],
+                                        "file size (GB)": _file["size"] / 1000000000.0,
+                                        "Block name": _block["name"],
+                                        "Error log": str(_transfer_error["detail_log"]["$t"]),
+                                        "From PFN": _transfer_error["from_pfn"],
+                                        "To PFN": _transfer_error["to_pfn"],
+                                        "Time": _transfer_error["time_done"],
+                                    }
+                            )
+        else:
+            print('Wrong human_readable parameter type')
         df = pandas.io.json.json_normalize(out)
-        format_dates(df, ["Time"])
+        format_dates(df, ["Time"])   
         return df
 
     async def blockarrive(self, **params):
@@ -226,8 +261,9 @@ class DataSvc:
         df = pandas.io.json.json_normalize(out)
         format_dates(df, ["Time Arrive", "Time update"])
         return df
-
-    async def filereplicas(self, **params):
+    
+    async def filereplicas(self,**params):
+    
 
         """Serves the file replicas known to phedex.
         Parameters
@@ -280,20 +316,20 @@ class DataSvc:
     
     
     async def AgentLogs(self, **params):
-    """Show messages from the agents.
-    Parameters
-    ----------
-    required inputs: at least one of the optional inputs
-    optional inputs: (as filters) user, host, pid, agent, update_since
-
-    node              name of the node
-    user              user name who owns agent processes
-    host              hostname where agent runs
-    agent             name of the agent
-    pid               process id of agent
-    update_since      ower bound of time to show log messages. Default last 24 h.
-    """
-    resjson = await self.jsonmethod("AgentLogs", **params)
-    out = []
+        """Show messages from the agents.
+        Parameters
+        ----------
+        required inputs: at least one of the optional inputs
+        optional inputs: (as filters) user, host, pid, agent, update_since
+    
+        node              name of the node
+        user              user name who owns agent processes
+        host              hostname where agent runs
+        agent             name of the agent
+        pid               process id of agent
+        update_since      ower bound of time to show log messages. Default last 24 h.
+        """
+        resjson = await self.jsonmethod("AgentLogs", **params)
+        out = []
     
     
