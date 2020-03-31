@@ -97,7 +97,7 @@ class DataSvc:
 
         return df
 
-    async def data(self,human_readable=None, **params):
+    async def data(self, human_readable=None, **params):
 
         """Shows data which is registered (injected) to phedex
         Parameters
@@ -111,7 +111,7 @@ class DataSvc:
                                  when level = 'file', return data of which files were created since this time
         create_since             when no parameters are given, default create_since is set to one day ago
         """
-        if (human_readable==None or human_readable==False):
+        if human_readable is None or human_readable is False:
             resjson = await self.jsonmethod("data", **params)
             out = []
             for _instance in resjson["phedex"]["dbs"]:
@@ -134,8 +134,8 @@ class DataSvc:
             df = pandas.io.json.json_normalize(out)
             format_dates(df, ["Time_file_was_created", "Time_block_was_created"])
             return df
-        
-        elif (human_readable==True):
+
+        elif human_readable is True:
             resjson = await self.jsonmethod("data", **params)
             out = []
             for _instance in resjson["phedex"]["dbs"]:
@@ -159,12 +159,12 @@ class DataSvc:
             format_dates(df, ["Time file was created", "Time block was created"])
             return df
         else:
-            print ('Wrong human_readable parameter type')
-            out=[]
-            df=pandas.io.json.json_normalize(out)
+            print("Wrong human_readable parameter type")
+            out = []
+            df = pandas.io.json.json_normalize(out)
             return df
 
-    async def errorlog(self,human_readable=None, **params):
+    async def errorlog(self, human_readable=None, **params):
 
         """Return detailed transfer error information, including logs of the transfer and validation commands.
         Note that phedex only stores the last 100 errors per link, so more errors may have occurred then indicated by this API
@@ -181,48 +181,55 @@ class DataSvc:
         lfn              logical file name
         """
         out = []
-        error_message=''
         resjson = await self.jsonmethod("errorlog", **params)
-        if (human_readable==None or human_readable==False):
+        if human_readable is None or human_readable is False:
             for _instance in resjson["phedex"]["link"]:
                 for _block in _instance["block"]:
                     for _file in _block["file"]:
                         for _transfer_error in _file["transfer_error"]:
                             out.append(
-                                        {
-                                            "Link": _instance["from"] + " to " + _instance["to"],
-                                            "LFN": _file["name"],
-                                            "file_Checksum": _file["checksum"],
-                                            "file_size_(GB)": _file["size"] / 1000000000.0,
-                                            "Block_name": _block["name"],
-                                            "Error_log": str(_transfer_error["detail_log"]["$t"]),
-                                            "From_PFN": _transfer_error["from_pfn"],
-                                            "To_PFN": _transfer_error["to_pfn"],
-                                            "Time": _transfer_error["time_done"],
-                                        }
-                                )
-        elif(human_readable==True):
+                                {
+                                    "Link": _instance["from"]
+                                    + " to "
+                                    + _instance["to"],
+                                    "LFN": _file["name"],
+                                    "file_Checksum": _file["checksum"],
+                                    "file_size_(GB)": _file["size"] / 1000000000.0,
+                                    "Block_name": _block["name"],
+                                    "Error_log": str(
+                                        _transfer_error["detail_log"]["$t"]
+                                    ),
+                                    "From_PFN": _transfer_error["from_pfn"],
+                                    "To_PFN": _transfer_error["to_pfn"],
+                                    "Time": _transfer_error["time_done"],
+                                }
+                            )
+        elif human_readable is True:
             for _instance in resjson["phedex"]["link"]:
                 for _block in _instance["block"]:
                     for _file in _block["file"]:
                         for _transfer_error in _file["transfer_error"]:
                             out.append(
-                                    {
-                                        "Link": _instance["from"] + " to " + _instance["to"],
-                                        "LFN": _file["name"],
-                                        "file Checksum": _file["checksum"],
-                                        "file size (GB)": _file["size"] / 1000000000.0,
-                                        "Block name": _block["name"],
-                                        "Error log": str(_transfer_error["detail_log"]["$t"]),
-                                        "From PFN": _transfer_error["from_pfn"],
-                                        "To PFN": _transfer_error["to_pfn"],
-                                        "Time": _transfer_error["time_done"],
-                                    }
+                                {
+                                    "Link": _instance["from"]
+                                    + " to "
+                                    + _instance["to"],
+                                    "LFN": _file["name"],
+                                    "file Checksum": _file["checksum"],
+                                    "file size (GB)": _file["size"] / 1000000000.0,
+                                    "Block name": _block["name"],
+                                    "Error log": str(
+                                        _transfer_error["detail_log"]["$t"]
+                                    ),
+                                    "From PFN": _transfer_error["from_pfn"],
+                                    "To PFN": _transfer_error["to_pfn"],
+                                    "Time": _transfer_error["time_done"],
+                                }
                             )
         else:
-            print('Wrong human_readable parameter type')
+            print("Wrong human_readable parameter type")
         df = pandas.io.json.json_normalize(out)
-        format_dates(df, ["Time"])   
+        format_dates(df, ["Time"])
         return df
 
     async def blockarrive(self, **params):
@@ -261,9 +268,8 @@ class DataSvc:
         df = pandas.io.json.json_normalize(out)
         format_dates(df, ["Time Arrive", "Time update"])
         return df
-    
-    async def filereplicas(self,**params):
-    
+
+    async def filereplicas(self, **params):
 
         """Serves the file replicas known to phedex.
         Parameters
@@ -313,15 +319,13 @@ class DataSvc:
                     )
         df = pandas.io.json.json_normalize(out)
         return format_dates(df, ["File created on", "File in node since"])
-    
-    
+
     async def AgentLogs(self, **params):
         """Show messages from the agents.
         Parameters
         ----------
         required inputs: at least one of the optional inputs
         optional inputs: (as filters) user, host, pid, agent, update_since
-    
         node              name of the node
         user              user name who owns agent processes
         host              hostname where agent runs
@@ -329,7 +333,3 @@ class DataSvc:
         pid               process id of agent
         update_since      ower bound of time to show log messages. Default last 24 h.
         """
-        resjson = await self.jsonmethod("AgentLogs", **params)
-        out = []
-    
-    
