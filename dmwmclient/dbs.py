@@ -5,6 +5,7 @@ import pandas
 class DBS:
     """DBS3 client
 
+    API reference: https://cms-http-group.web.cern.ch/cms-http-group/apidoc/dbs3/current/dbs.web.html#module-dbs.web.DBSReaderModel
     """
 
     defaults = {
