@@ -47,6 +47,6 @@ class ReqMgr:
                     flatrow.update(transition)
                     flat.append(flatrow)
 
-        df = pandas.io.json.json_normalize(flat)
+        df = pandas.json_normalize(flat)
         format_dates(df, ["UpdateTime"])
         return df

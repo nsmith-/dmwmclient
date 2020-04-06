@@ -73,7 +73,7 @@ class DataSvc:
                         the blocks; if n, only show blocks
         """
         resjson = await self.jsonmethod("blockreplicas", **params)
-        df = pandas.io.json.json_normalize(
+        df = pandas.json_normalize(
             resjson["phedex"]["block"],
             record_path="replica",
             record_prefix="replica.",
@@ -91,7 +91,7 @@ class DataSvc:
         noempty  filter out nodes which do not host any data
         """
         resjson = await self.jsonmethod("nodes", **params)
-        df = pandas.io.json.json_normalize(
+        df = pandas.json_normalize(
             resjson["phedex"], record_path="node", record_prefix="node.",
         )
 
@@ -131,7 +131,7 @@ class DataSvc:
                                     "Time_file_was_created": _file["time_create"],
                                 }
                             )
-            df = pandas.io.json.json_normalize(out)
+            df = pandas.json_normalize(out)
             format_dates(df, ["Time_file_was_created", "Time_block_was_created"])
             return df
 
@@ -155,13 +155,13 @@ class DataSvc:
                                     "Time file was created": _file["time_create"],
                                 }
                             )
-            df = pandas.io.json.json_normalize(out)
+            df = pandas.json_normalize(out)
             format_dates(df, ["Time file was created", "Time block was created"])
             return df
         else:
             print("Wrong human_readable parameter type")
             out = []
-            df = pandas.io.json.json_normalize(out)
+            df = pandas.json_normalize(out)
             return df
 
     async def errorlog(self, human_readable=None, **params):
@@ -228,7 +228,7 @@ class DataSvc:
                             )
         else:
             print("Wrong human_readable parameter type")
-        df = pandas.io.json.json_normalize(out)
+        df = pandas.json_normalize(out)
         format_dates(df, ["Time"])
         return df
 
@@ -266,7 +266,7 @@ class DataSvc:
                             "Basis_code": _destination["basis"],
                         }
                     )
-            df = pandas.io.json.json_normalize(out)
+            df = pandas.json_normalize(out)
             format_dates(df, ["Time_Arrive", "Time_update"])
         elif human_readable is True:
             for _block in resjson["phedex"]["block"]:
@@ -284,11 +284,11 @@ class DataSvc:
                             ),
                         }
                     )
-            df = pandas.io.json.json_normalize(out)
+            df = pandas.json_normalize(out)
             format_dates(df, ["Time Arrive", "Time update"])
         else:
             print("Wrong human_readable parameter type")
-            df = pandas.io.json.json_normalize(out)
+            df = pandas.json_normalize(out)
         return df
 
     async def filereplicas(self, human_readable=None, **params):
@@ -340,7 +340,7 @@ class DataSvc:
                                 "File_in_node_since": _replica["time_create"],
                             }
                         )
-            df = pandas.io.json.json_normalize(out)
+            df = pandas.json_normalize(out)
             return format_dates(df, ["File_created_on", "File_in_node_since"])
         elif human_readable is True:
             for _block in resjson["phedex"]["block"]:
@@ -361,11 +361,11 @@ class DataSvc:
                                 "File in node since": _replica["time_create"],
                             }
                         )
-            df = pandas.io.json.json_normalize(out)
+            df = pandas.json_normalize(out)
             return format_dates(df, ["File created on", "File in node since"])
         elif human_readable is not None and type(human_readable) is not bool:
             print("Wrong human_readable parameter type")
-            df = pandas.io.json.json_normalize(out)
+            df = pandas.json_normalize(out)
             return df
 
     async def agentlogs(self, human_readable=None, **params):
@@ -385,7 +385,7 @@ class DataSvc:
         out = []
         if human_readable is not None and type(human_readable) is not bool:
             print("Wrong human_readable parameter type")
-            df = pandas.io.json.json_normalize(out)
+            df = pandas.json_normalize(out)
             return df
         elif human_readable is None or human_readable is False:
             for _agent in resjson["phedex"]["agent"]:
@@ -406,7 +406,7 @@ class DataSvc:
                             "Message": str(_log["message"]["$t"]),
                         }
                     )
-            df = pandas.io.json.json_normalize(out)
+            df = pandas.json_normalize(out)
             return format_dates(df, ["Time"])
         elif human_readable is True:
             for _agent in resjson["phedex"]["agent"]:
@@ -427,7 +427,7 @@ class DataSvc:
                             "Message": str(_log["message"]["$t"]),
                         }
                     )
-            df = pandas.io.json.json_normalize(out)
+            df = pandas.json_normalize(out)
             return format_dates(df, ["Time"])
 
     async def missingfiles(self, human_readable=None, **params):
@@ -452,7 +452,7 @@ class DataSvc:
         out = []
         if human_readable is not None and type(human_readable) is not bool:
             print("Wrong human_readable parameter type")
-            df = pandas.io.json.json_normalize(out)
+            df = pandas.json_normalize(out)
             return df
         elif human_readable is None or human_readable is False:
             for _block in resjson["phedex"]["block"]:
@@ -472,7 +472,7 @@ class DataSvc:
                                 "subscribed": _missing["subscribed"],
                             }
                         )
-            df = pandas.io.json.json_normalize(out)
+            df = pandas.json_normalize(out)
             return format_dates(df, ["created"])
         elif human_readable is True:
             for _block in resjson["phedex"]["block"]:
@@ -492,5 +492,5 @@ class DataSvc:
                                 "Subscribed?": _missing["subscribed"],
                             }
                         )
-            df = pandas.io.json.json_normalize(out)
+            df = pandas.json_normalize(out)
             return format_dates(df, ["Time created"])

@@ -30,7 +30,7 @@ class Dynamo:
         result = await self.client.getjson(
             self.baseurl.join("detox/summary"), params=params
         )
-        df = pandas.io.json.json_normalize(
+        df = pandas.json_normalize(
             result["data"],
             record_path="site_data",
             meta=[
@@ -51,7 +51,7 @@ class Dynamo:
         result = await self.client.getjson(
             self.baseurl.join("detox/sitedetail"), params=params
         )
-        out = pandas.io.json.json_normalize(result["data"]["content"]["datasets"])
+        out = pandas.json_normalize(result["data"]["content"]["datasets"])
         out["condition"] = out["condition_id"].map(
             {int(k): v for k, v in result["data"]["conditions"].items()}
         )
