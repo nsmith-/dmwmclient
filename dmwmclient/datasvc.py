@@ -494,3 +494,142 @@ class DataSvc:
                         )
             df = pandas.json_normalize(out)
             return format_dates(df, ["Time created"])
+
+    async def agents(self, human_readable=None, **params):
+        """Serves information about running (or at least recently running) phedex agents.
+        Parameters
+        ----------
+        required inputs: none
+        optional inputs: (as filters) node, se, agent
+
+        node             node name, could be multiple
+        se               storage element name, could be multiple
+        agent            agent name, could be multiple
+        version          phedex version
+        update_since     updated since this time
+        detail           'y' or 'n', default 'n'. show "code" information at file level *
+        """
+        resjson = await self.jsonmethod("agents", **params)
+        out = []
+        if human_readable is not None and type(human_readable) is not bool:
+            print("Wrong human_readable parameter type")
+            df = pandas.json_normalize(out)
+            return df
+        elif human_readable is None or human_readable is False:
+            for _node in resjson["phedex"]["node"]:
+                for _agent in _node["agent"]:
+                    out.append(
+                        {
+                            "Node": _node["node"],
+                            "Host": _node["host"],
+                            "Agent_name": _node["name"],
+                            "Agent_label": _agent["label"],
+                            "Time_update": _agent["time_update"],
+                            "state_dir": _agent["state_dir"],
+                            "version": _agent["version"],
+                        }
+                    )
+            df = pandas.json_normalize(out)
+            return format_dates(df, ["Time_update"])
+        elif human_readable is True:
+            for _node in resjson["phedex"]["node"]:
+                for _agent in _node["agent"]:
+                    out.append(
+                        {
+                            "Node": _node["node"],
+                            "Host": _node["host"],
+                            "Agent name": _node["name"],
+                            "Agent label": _agent["label"],
+                            "Time update": _agent["time_update"],
+                            "Directory": _agent["state_dir"],
+                            "Version": _agent["version"],
+                        }
+                    )
+            df = pandas.json_normalize(out)
+            return format_dates(df, ["Time update"])
+
+    async def BlockLatency(self, human_readable=None, **params):
+        """Show authentication state and abilities
+        Parameters
+        ----------
+        ability        authorization ability.  If passed then the nodes (from TMDB)
+                       that the user is allowed to use "ability" for are returned.
+        require_cert   if passed then the call will die if the user is not
+                       authenticated by certificate
+        require_passwd if passed then the call will die if the user is not
+                       authenticated by password
+        """
+        resjson = await self.jsonmethod("blocklatency", **params)
+        out = []
+        if human_readable is not None and type(human_readable) is not bool:
+            print("Wrong human_readable parameter type")
+            df = pandas.json_normalize(out)
+            return df
+        elif human_readable is None or human_readable is False:
+            for _block in resjson["phedex"]["block"]:
+                for _destination in _block["destination"]:
+                    for _latency in _destination["latency"]:
+                        out.append(
+                            {
+                                "Block": _block["name"],
+                                "Block_ID": _block["id"],
+                                "Dataset": _block["dataset"],
+                                "Size": _block["bytes"],
+                                "Time_create": _block["time_create"],
+                                "Number_of_files": _block["files"],
+                                "Time_update": _block["time_update"],
+                                "Destination": _destination["name"],
+                                "custodial": _latency["is_custodial"],
+                                "last_suspend": _latency["last_suspend"],
+                                "last_replica": _latency["last_replica"],
+                                "time_subscription": _latency["time_subscription"],
+                                "block_closed": _latency["block_close"],
+                                "latency": _latency["latency"],
+                            }
+                        )
+            df = pandas.json_normalize(out)
+            return format_dates(
+                df,
+                [
+                    "Time_update",
+                    "last_suspend",
+                    "last_replica",
+                    "time_subscription",
+                    "block_closed",
+                    "Time_create",
+                ],
+            )
+        elif human_readable is True:
+            for _block in resjson["phedex"]["block"]:
+                for _destination in _block["destination"]:
+                    for _latency in _destination["latency"]:
+                        out.append(
+                            {
+                                "Block": _block["name"],
+                                "Block ID": _block["id"],
+                                "Dataset": _block["dataset"],
+                                "Size": _block["bytes"],
+                                "Time Create": _block["time_create"],
+                                "Number of files": _block["files"],
+                                "Time Update": _block["time_update"],
+                                "Destination": _destination["name"],
+                                "custodial": _latency["is_custodial"],
+                                "Last Suspend": _latency["last_suspend"],
+                                "Last Replica": _latency["last_replica"],
+                                "Time Subscription": _latency["time_subscription"],
+                                "Block Closed": _latency["block_close"],
+                                "Latency": _latency["latency"],
+                            }
+                        )
+            df = pandas.json_normalize(out)
+            return format_dates(
+                df,
+                [
+                    "Time Update",
+                    "Last Suspend",
+                    "Last Replica",
+                    "Time Subscription",
+                    "Block Closed",
+                    "Time Create",
+                ],
+            )
