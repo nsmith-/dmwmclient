@@ -633,3 +633,33 @@ class DataSvc:
                     "Time Create",
                 ],
             )
+
+    async def BlockReplicaSummary(self, human_readable=None, **params):
+        """Show authentication state and abilities
+        Parameters
+        ----------
+        ability        authorization ability.  If passed then the nodes (from TMDB)
+                       that the user is allowed to use "ability" for are returned.
+        require_cert   if passed then the call will die if the user is not
+                       authenticated by certificate
+        require_passwd if passed then the call will die if the user is not
+                       authenticated by password
+        """
+        resjson = await self.jsonmethod("blockreplicasummary", **params)
+        out = []
+        if human_readable is not None and type(human_readable) is not bool:
+            print("Wrong human_readable parameter type")
+            df = pandas.json_normalize(out)
+            return df
+        else:
+            for _block in resjson["phedex"]["block"]:
+                for _replica in _block["replica"]:
+                    out.append(
+                        {
+                            "Block": _block["name"],
+                            "Node": _replica["node"],
+                            "Complete": _replica["complete"],
+                        }
+                    )
+            df = pandas.json_normalize(out)
+            return df
