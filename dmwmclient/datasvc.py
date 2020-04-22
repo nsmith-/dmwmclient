@@ -111,57 +111,43 @@ class DataSvc:
                                  when level = 'file', return data of which files were created since this time
         create_since             when no parameters are given, default create_since is set to one day ago
         """
-        if human_readable is None or human_readable is False:
-            resjson = await self.jsonmethod("data", **params)
-            out = []
-            for _instance in resjson["phedex"]["dbs"]:
-                for _dataset in _instance["dataset"]:
-                    for _block in _dataset["block"]:
-                        for _file in _block["file"]:
-                            out.append(
-                                {
-                                    "Dataset": _dataset["name"],
-                                    "Is_dataset_open": _dataset["is_open"],
-                                    "block_Name": _block["name"],
-                                    "Block_size_(GB)": _block["bytes"] / 1000000000.0,
-                                    "Time_block_was_created": _block["time_create"],
-                                    "File_name": _file["lfn"],
-                                    "File_checksum": _file["checksum"],
-                                    "File_size": _file["size"],
-                                    "Time_file_was_created": _file["time_create"],
-                                }
-                            )
-            df = pandas.json_normalize(out)
-            format_dates(df, ["Time_file_was_created", "Time_block_was_created"])
-            return df
-
-        elif human_readable is True:
-            resjson = await self.jsonmethod("data", **params)
-            out = []
-            for _instance in resjson["phedex"]["dbs"]:
-                for _dataset in _instance["dataset"]:
-                    for _block in _dataset["block"]:
-                        for _file in _block["file"]:
-                            out.append(
-                                {
-                                    "Dataset": _dataset["name"],
-                                    "Is dataset open": _dataset["is_open"],
-                                    "block Name": _block["name"],
-                                    "Block size (GB)": _block["bytes"] / 1000000000.0,
-                                    "Time block was created": _block["time_create"],
-                                    "File name": _file["lfn"],
-                                    "File checksum": _file["checksum"],
-                                    "File size": _file["size"],
-                                    "Time file was created": _file["time_create"],
-                                }
-                            )
-            df = pandas.json_normalize(out)
-            format_dates(df, ["Time file was created", "Time block was created"])
-            return df
+        if type(human_readable) is not bool and human_readable is not None:
+            raise Exception("Wrong human_readable parameter type")
+        resjson = await self.jsonmethod("data", **params)
+        out = []
+        for _instance in resjson["phedex"]["dbs"]:
+            for _dataset in _instance["dataset"]:
+                for _block in _dataset["block"]:
+                    for _file in _block["file"]:
+                        out.append(
+                            {
+                                "Dataset": _dataset["name"],
+                                "Is_dataset_open": _dataset["is_open"],
+                                "block_Name": _block["name"],
+                                "Block_size_(GB)": _block["bytes"] / 1000000000.0,
+                                "Time_block_was_created": _block["time_create"],
+                                "File_name": _file["lfn"],
+                                "File_checksum": _file["checksum"],
+                                "File_size": _file["size"] / 1000000000.0,
+                                "Time_file_was_created": _file["time_create"],
+                            }
+                        )
+        df = pandas.json_normalize(out)
+        format_dates(df, ["Time_file_was_created", "Time_block_was_created"])
+        if human_readable:
+            mapping = {
+                "Is_dataset_open": "Is dataset open",
+                "block_Name": "Block Name",
+                "Block_size_(GB)": "Block size (GB)",
+                "Time_block_was_created": "Time Block Was Created",
+                "File_name": "File Name",
+                "File_checksum": "File Checksum",
+                "File_size": "File Size (GB)",
+                "Time_file_was_created": "Time File Was Created",
+            }
+            df2 = df.rename(columns=mapping)
+            return df2
         else:
-            print("Wrong human_readable parameter type")
-            out = []
-            df = pandas.json_normalize(out)
             return df
 
     async def errorlog(self, human_readable=None, **params):
@@ -180,57 +166,43 @@ class DataSvc:
         dataset          dataset name
         lfn              logical file name
         """
-        out = []
+        if type(human_readable) is not bool and human_readable is not None:
+            raise Exception("Wrong human_readable parameter type")
         resjson = await self.jsonmethod("errorlog", **params)
-        if human_readable is None or human_readable is False:
-            for _instance in resjson["phedex"]["link"]:
-                for _block in _instance["block"]:
-                    for _file in _block["file"]:
-                        for _transfer_error in _file["transfer_error"]:
-                            out.append(
-                                {
-                                    "Link": _instance["from"]
-                                    + " to "
-                                    + _instance["to"],
-                                    "LFN": _file["name"],
-                                    "file_Checksum": _file["checksum"],
-                                    "file_size_(GB)": _file["size"] / 1000000000.0,
-                                    "Block_name": _block["name"],
-                                    "Error_log": str(
-                                        _transfer_error["detail_log"]["$t"]
-                                    ),
-                                    "From_PFN": _transfer_error["from_pfn"],
-                                    "To_PFN": _transfer_error["to_pfn"],
-                                    "Time": _transfer_error["time_done"],
-                                }
-                            )
-        elif human_readable is True:
-            for _instance in resjson["phedex"]["link"]:
-                for _block in _instance["block"]:
-                    for _file in _block["file"]:
-                        for _transfer_error in _file["transfer_error"]:
-                            out.append(
-                                {
-                                    "Link": _instance["from"]
-                                    + " to "
-                                    + _instance["to"],
-                                    "LFN": _file["name"],
-                                    "file Checksum": _file["checksum"],
-                                    "file size (GB)": _file["size"] / 1000000000.0,
-                                    "Block name": _block["name"],
-                                    "Error log": str(
-                                        _transfer_error["detail_log"]["$t"]
-                                    ),
-                                    "From PFN": _transfer_error["from_pfn"],
-                                    "To PFN": _transfer_error["to_pfn"],
-                                    "Time": _transfer_error["time_done"],
-                                }
-                            )
-        else:
-            print("Wrong human_readable parameter type")
+        out = []
+        for _instance in resjson["phedex"]["link"]:
+            for _block in _instance["block"]:
+                for _file in _block["file"]:
+                    for _transfer_error in _file["transfer_error"]:
+                        out.append(
+                            {
+                                "Link": _instance["from"] + " to " + _instance["to"],
+                                "LFN": _file["name"],
+                                "file_Checksum": _file["checksum"],
+                                "file_size_(GB)": _file["size"] / 1000000000.0,
+                                "Block_name": _block["name"],
+                                "Error_log": str(_transfer_error["detail_log"]["$t"]),
+                                "From_PFN": _transfer_error["from_pfn"],
+                                "To_PFN": _transfer_error["to_pfn"],
+                                "Time": _transfer_error["time_done"],
+                            }
+                        )
         df = pandas.json_normalize(out)
         format_dates(df, ["Time"])
-        return df
+        if human_readable:
+            mapping = {
+                "From_PFN": "From PFN",
+                "To_PFN": "To PFN",
+                "Error_log": "Error Log",
+                "Block_Name": "Block Name",
+                "Block_size_(GB)": "Block size (GB)",
+                "file_checksum": "File Checksum",
+                "file_size_(GB)": "File Size (GB)",
+            }
+            df2 = df.rename(columns=mapping)
+            return df2
+        else:
+            return df
 
     async def blockarrive(self, human_readable=None, **params):
 
@@ -249,47 +221,40 @@ class DataSvc:
         arrive_after          only show blocks that are expected to arrive after this time.
 
         """
-
+        if type(human_readable) is not bool and human_readable is not None:
+            raise Exception("Wrong human_readable parameter type")
         resjson = await self.jsonmethod("blockarrive", **params)
         out = []
-        if human_readable is None or human_readable is False:
-            for _block in resjson["phedex"]["block"]:
-                for _destination in _block["destination"]:
-                    out.append(
-                        {
-                            "Block_Name": _block["name"],
-                            "Destination": _destination["name"],
-                            "Time_Arrive": _destination["time_arrive"],
-                            "Time_update": _destination["time_update"],
-                            "Number_of_files": _destination["files"],
-                            "Block_size_(GB)": _destination["bytes"] / 1000000000.0,
-                            "Basis_code": _destination["basis"],
-                        }
-                    )
-            df = pandas.json_normalize(out)
-            format_dates(df, ["Time_Arrive", "Time_update"])
-        elif human_readable is True:
-            for _block in resjson["phedex"]["block"]:
-                for _destination in _block["destination"]:
-                    out.append(
-                        {
-                            "Block_Name": _block["name"],
-                            "Destination": _destination["name"],
-                            "Time Arrive": _destination["time_arrive"],
-                            "Time update": _destination["time_update"],
-                            "Number of files": _destination["files"],
-                            "Block size (GB)": _destination["bytes"] / 1000000000.0,
-                            "Basis code": BLOCKARRIVE_BASISCODE.get(
-                                _destination["basis"], "No code specified"
-                            ),
-                        }
-                    )
-            df = pandas.json_normalize(out)
-            format_dates(df, ["Time Arrive", "Time update"])
+        for _block in resjson["phedex"]["block"]:
+            for _destination in _block["destination"]:
+                out.append(
+                    {
+                        "Block_Name": _block["name"],
+                        "Destination": _destination["name"],
+                        "Time_Arrive": _destination["time_arrive"],
+                        "Time_update": _destination["time_update"],
+                        "Number_of_files": _destination["files"],
+                        "Block_size_(GB)": _destination["bytes"] / 1000000000.0,
+                        "Basis_code": BLOCKARRIVE_BASISCODE.get(
+                            _destination["basis"], "No code specified"
+                        ),
+                    }
+                )
+        df = pandas.json_normalize(out)
+        format_dates(df, ["Time_Arrive", "Time_update"])
+        if human_readable:
+            mapping = {
+                "Block_Name": "Block Name",
+                "Block_size_(GB)": "Block size (GB)",
+                "Time_Arrive": "Time Arrive",
+                "Time_update": "Time Update",
+                "Number_of_files": "Number Of Files",
+                "Basis_code": "Basis Code",
+            }
+            df2 = df.rename(columns=mapping)
+            return df2
         else:
-            print("Wrong human_readable parameter type")
-            df = pandas.json_normalize(out)
-        return df
+            return df
 
     async def filereplicas(self, human_readable=None, **params):
 
@@ -319,53 +284,42 @@ class DataSvc:
         group          group name.  default is to return replicas for any group.
         lfn            logical file name
         """
+        if type(human_readable) is not bool and human_readable is not None:
+            raise Exception("Wrong human_readable parameter type")
         resjson = await self.jsonmethod("filereplicas", **params)
         out = []
-        if human_readable is None or human_readable is False:
-            for _block in resjson["phedex"]["block"]:
-                for _file in _block["file"]:
-                    for _replica in _file["replica"]:
-                        out.append(
-                            {
-                                "Block_name": _block["name"],
-                                "Files": _block["files"],
-                                "Block_size_(GB)": _block["bytes"] / 1000000000.0,
-                                "lfn": _file["name"],
-                                "checksum": _file["checksum"],
-                                "File_created_on": _file["time_create"],
-                                "File_replica_at": _replica["node"],
-                                "File_subcribed": _replica["subscribed"],
-                                "Custodial": _replica["custodial"],
-                                "Group": _replica["group"],
-                                "File_in_node_since": _replica["time_create"],
-                            }
-                        )
-            df = pandas.json_normalize(out)
-            return format_dates(df, ["File_created_on", "File_in_node_since"])
-        elif human_readable is True:
-            for _block in resjson["phedex"]["block"]:
-                for _file in _block["file"]:
-                    for _replica in _file["replica"]:
-                        out.append(
-                            {
-                                "Block name": _block["name"],
-                                "Files in block": _block["files"],
-                                "Block size (GB)": _block["bytes"] / 1000000000.0,
-                                "File name": _file["name"],
-                                "File checksum": _file["checksum"],
-                                "File created on": _file["time_create"],
-                                "File replica at": _replica["node"],
-                                "File subcribed?": _replica["subscribed"],
-                                "Custodial?": _replica["custodial"],
-                                "Group": _replica["group"],
-                                "File in node since": _replica["time_create"],
-                            }
-                        )
-            df = pandas.json_normalize(out)
-            return format_dates(df, ["File created on", "File in node since"])
-        elif human_readable is not None and type(human_readable) is not bool:
-            print("Wrong human_readable parameter type")
-            df = pandas.json_normalize(out)
+        for _block in resjson["phedex"]["block"]:
+            for _file in _block["file"]:
+                for _replica in _file["replica"]:
+                    out.append(
+                        {
+                            "Block_name": _block["name"],
+                            "Files": _block["files"],
+                            "Block_size_(GB)": _block["bytes"] / 1000000000.0,
+                            "lfn": _file["name"],
+                            "Checksum": _file["checksum"],
+                            "File_created_on": _file["time_create"],
+                            "File_replica_at": _replica["node"],
+                            "File_subcribed": _replica["subscribed"],
+                            "Custodial": _replica["custodial"],
+                            "Group": _replica["group"],
+                            "File_in_node_since": _replica["time_create"],
+                        }
+                    )
+        df = pandas.json_normalize(out)
+        format_dates(df, ["File_created_on", "File_in_node_since"])
+        if human_readable is True:
+            mapping = {
+                "Block_name": "Block Name",
+                "Block_size_(GB)": "Block size (GB)",
+                "File_created_on": "File Created On",
+                "File_replica_at": "File Replica At",
+                "File_subcribed": "File Subcribed",
+                "File_in_node_since": "File In Node Since",
+            }
+            df2 = df.rename(columns=mapping)
+            return df2
+        else:
             return df
 
     async def agentlogs(self, human_readable=None, **params):
@@ -548,7 +502,7 @@ class DataSvc:
             df = pandas.json_normalize(out)
             return format_dates(df, ["Time update"])
 
-    async def BlockLatency(self, human_readable=None, **params):
+    async def blocklatency(self, human_readable=None, **params):
         """Show authentication state and abilities
         Parameters
         ----------
@@ -634,7 +588,7 @@ class DataSvc:
                 ],
             )
 
-    async def BlockReplicaSummary(self, human_readable=None, **params):
+    async def blockreplicasummary(self, human_readable=None, **params):
         """Show authentication state and abilities
         Parameters
         ----------
