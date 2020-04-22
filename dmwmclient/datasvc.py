@@ -335,16 +335,13 @@ class DataSvc:
         pid               process id of agent
         update_since      ower bound of time to show log messages. Default last 24 h.
         """
+        if type(human_readable) is not bool and human_readable is not None:
+            raise Exception("Wrong human_readable parameter type")
         resjson = await self.jsonmethod("agentlogs", **params)
         out = []
-        if human_readable is not None and type(human_readable) is not bool:
-            print("Wrong human_readable parameter type")
-            df = pandas.json_normalize(out)
-            return df
-        elif human_readable is None or human_readable is False:
-            for _agent in resjson["phedex"]["agent"]:
-                for _node in _agent["node"]:
-                    node = _node["name"]
+        for _agent in resjson["phedex"]["agent"]:
+            for _node in _agent["node"]:
+                node = _node["name"]
                 for _log in _agent["log"]:
                     out.append(
                         {
@@ -360,29 +357,17 @@ class DataSvc:
                             "Message": str(_log["message"]["$t"]),
                         }
                     )
-            df = pandas.json_normalize(out)
-            return format_dates(df, ["Time"])
-        elif human_readable is True:
-            for _agent in resjson["phedex"]["agent"]:
-                for _node in _agent["node"]:
-                    node = _node["name"]
-                for _log in _agent["log"]:
-                    out.append(
-                        {
-                            "Agent": _agent["name"],
-                            "Host": _agent["host"],
-                            "PID": _agent["pid"],
-                            "Node": node,
-                            "User": _agent["user"],
-                            "Reason": _log["reason"],
-                            "Time": _log["time"],
-                            "state dir": _log["state_dir"],
-                            "working dir": _log["working_dir"],
-                            "Message": str(_log["message"]["$t"]),
-                        }
-                    )
-            df = pandas.json_normalize(out)
-            return format_dates(df, ["Time"])
+        df = pandas.json_normalize(out)
+        format_dates(df, ["Time"])
+        if human_readable is True:
+            mapping = {
+                "state_dir": "State Directory",
+                "working_dir": "Working Directory",
+            }
+            df2 = df.rename(columns=mapping)
+            return df2
+        else:
+            return df
 
     async def missingfiles(self, human_readable=None, **params):
         """Show files which are missing from blocks at a node.
