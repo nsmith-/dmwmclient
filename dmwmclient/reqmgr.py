@@ -67,9 +67,9 @@ class ReqMgr:
                 tstart = datetime.datetime.fromtimestamp(
                     item["RequestTransition"][-1]["UpdateTime"]
                 )
-                if tstart < datetime.datetime.now() - datetime.timedelta(
-                    days=timedelta
-                ):
+                current_time = datetime.datetime.now()
+                past_time = datetime.timedelta(days=timedelta)
+                if tstart < current_time - past_time:
                     if item.get("InputDataset") is not None:
                         input_data = {
                             "InputDataset": item.get("InputDataset"),
