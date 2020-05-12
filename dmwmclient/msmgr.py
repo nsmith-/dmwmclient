@@ -1,14 +1,10 @@
 import httpx
 import pandas
 from .util import format_dates
-import json
 
 
 class MSMgr:
-    """MSManager client
-    
-    """
-
+    """MSManager client"""
     defaults = {
         "msmgr_base": "https://cmsweb.cern.ch/ms-transferor/data/",
     }
