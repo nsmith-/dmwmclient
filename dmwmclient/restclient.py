@@ -73,15 +73,16 @@ class RESTClient:
     async def cern_sso_follow(self, result, host):
         """Follow CERN SSO redirect, returning the result of the original request"""
         html = etree.HTML(result.content)
-        link = [
-            l
-            for l in html.xpath("//a")
-            if l.text == "Sign in using your CERN Certificate"
+        links = [
+            link
+            for link in html.xpath("//a")
+            if link.text == "Sign in using your CERN Certificate"
         ]
-        if len(link) == 1:
+        if len(links) == 1:
+            link = links.pop()
             logger.debug("Running first-time CERN SSO sign-in routine")
             self._ssoevents[host] = asyncio.Event()
-            url = result.url.join(link[0].attrib["href"])
+            url = result.url.join(link.attrib["href"])
             result = await self._client.get(url)
             if not result.status_code == 200:
                 logger.debug("Return content:\n" + result.text)
