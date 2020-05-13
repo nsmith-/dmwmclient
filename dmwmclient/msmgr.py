@@ -5,6 +5,7 @@ from .util import format_dates
 
 class MSMgr:
     """MSManager client"""
+
     defaults = {
         "msmgr_base": "https://cmsweb.cern.ch/ms-transferor/data/",
     }
