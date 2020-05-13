@@ -6,6 +6,7 @@ from .dbs import DBS
 from .reqmgr import ReqMgr
 from .dynamo import Dynamo
 from .mcm import McM
+from .msmgr import MSMgr
 
 
 class Client:
@@ -17,6 +18,7 @@ class Client:
         self.reqmgr = ReqMgr(self.baseclient)
         self.dynamo = Dynamo(self.baseclient)
         self.mcm = McM(self.baseclient)
+        self.msmgr = MSMgr(self.baseclient)
 
 
 __all__ = [
@@ -28,4 +30,5 @@ __all__ = [
     "ReqMgr",
     "Dynamo",
     "Client",
+    "MSMgr",
 ]
