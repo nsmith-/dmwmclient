@@ -1,3 +1,4 @@
+import asyncio
 import os
 import datetime
 import json
@@ -11,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class Rucio:
-    _lifetime = re.compile(r"datetime\.datetime\(([^\)]*)\)")
+    _lifetime = re.compile(r".*datetime\.datetime\(([0-9 ,]*)\)")
 
     def __init__(self, client, account=None, host=None, auth_host=None):
         self.host = httpx.URL("http://cms-rucio.cern.ch" if host is None else host)
@@ -19,6 +20,7 @@ class Rucio:
             "https://cms-rucio-auth.cern.ch" if auth_host is None else auth_host
         )
         self.client = client
+        self._token_lock = asyncio.Lock()
         self._token_expiration = None
         self._headers = {}
         self._account = os.getenv("RUCIO_ACCOUNT", account)
@@ -37,34 +39,36 @@ class Rucio:
             self._headers = {"X-Rucio-Account": self._account}
 
     async def check_token(self, validate=False):
-        if self._token_expiration is None:
-            token_req = self.client.build_request(
-                method="GET",
-                url=self.auth_host.join("auth/x509_proxy"),
-                headers=self._headers,
-            )
-            response = await self.client.send(token_req)
-            logger.debug(f"Auth response headers: {response.headers}")
-            self._headers = {
-                "X-Rucio-Auth-Token": response.headers["x-rucio-auth-token"]
-            }
-            self._token_expiration = datetime.datetime.strptime(
-                response.headers["X-Rucio-Auth-Token-Expires"],
-                "%a, %d %b %Y %H:%M:%S %Z",
-            )
-        elif validate or self._token_expiration < datetime.datetime.utcnow() + datetime.timedelta(
-            minutes=5
-        ):
-            token_req = self.client.build_request(
-                method="GET",
-                url=self.auth_host.join("auth/validate"),
-                headers=self._headers,
-            )
-            response = await self.client.send(token_req)
-            m = self._lifetime.match(response.text)
-            if not m:
-                raise RuntimeError("Bad response from auth endpoint")
-            print(m.groups())
+        async with self._token_lock:
+            if self._token_expiration is None:
+                token_req = self.client.build_request(
+                    method="GET",
+                    url=self.auth_host.join("auth/x509_proxy"),
+                    headers=self._headers,
+                )
+                response = await self.client.send(token_req)
+                logger.debug(f"Auth response headers: {response.headers}")
+                self._headers = {
+                    "X-Rucio-Auth-Token": response.headers["x-rucio-auth-token"]
+                }
+                self._token_expiration = datetime.datetime.strptime(
+                    response.headers["X-Rucio-Auth-Token-Expires"],
+                    "%a, %d %b %Y %H:%M:%S %Z",
+                )
+            elif validate or self._token_expiration < datetime.datetime.utcnow() + datetime.timedelta(
+                minutes=5
+            ):
+                token_req = self.client.build_request(
+                    method="GET",
+                    url=self.auth_host.join("auth/validate"),
+                    headers=self._headers,
+                )
+                response = await self.client.send(token_req)
+                m = self._lifetime.match(response.text)
+                if not m:
+                    raise RuntimeError("Bad response from auth endpoint")
+                ts = m.groups()[0]
+                self._token_expiration = datetime.datetime(*map(int, ts.split(",")))
 
     async def getjson(self, method, params=None, timeout=None, retries=1):
         await self.check_token()
