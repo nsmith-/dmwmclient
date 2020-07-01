@@ -143,11 +143,6 @@ class RESTClient:
                         self._client.cookies.set_cookie_header(request)
                         continue
                     result = await self.cern_sso_follow(result, request.url.host)
-                if result.status_code != 200:
-                    logging.warning(
-                        "HTTP status code %d received while executing request %r"
-                        % (result.status_code, request)
-                    )
                 return result
             except httpx.TimeoutException:
                 logging.warning(
