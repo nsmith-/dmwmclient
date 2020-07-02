@@ -573,6 +573,70 @@ class DataSvc:
                 ],
             )
 
+    async def requestlist(self, human_readable=None, **params):
+        """Serve as a simple request search and cache-able catalog of requests to save within a client,
+        which may then use the request ID to obtain further details using TransferRequests or DeletionRequests.
+        Parameters
+        ----------
+        request *        request id
+        type             request type, 'xfer' (default) or 'delete'
+        approval         approval state, 'approved', 'disapproved', 'mixed', or 'pending'
+        requested_by *   requestor's name
+        node *           name of the destination node
+                         (show requests in which this node is involved)
+        decision         decision at the node, 'approved', 'disapproved' or 'pending'
+        group *          user group
+        create_since     created since this time
+        create_until     created until this time
+        decide_since     decided since this time
+        decide_until     decided until this time
+        dataset *        dataset is part of request, or a block from this dataset
+        block *          block is part of request, or part of a dataset in request
+        decided_by *     name of person who approved the request
+
+        * could be multiple and/or with wildcard
+        ** when both 'block' and 'dataset' are present, they form a logical disjunction (ie. or)
+        """
+        resjson = await self.jsonmethod("requestlist", **params)
+        out = []
+        if human_readable is not None and type(human_readable) is not bool:
+            print("Wrong human_readable parameter type")
+            df = pandas.json_normalize(out)
+            return df
+        elif human_readable is None or human_readable is False:
+            for _request in resjson["phedex"]["request"]:
+                for _node in _request["node"]:
+                    out.append(
+                        {
+                            "request_id": _request["id"],
+                            "time_created": _request["time_create"],
+                            "requested_by": _request["requested_by"],
+                            "approval": _request["approval"],
+                            "node": _node["name"],
+                            "time_decided": _node["time_decided"],
+                            "decided_by": _node["decided_by"],
+                        }
+                    )
+            df = pandas.json_normalize(out)
+            return format_dates(df, ["time_created", "time_decided"])
+
+        else:
+            for _request in resjson["phedex"]["request"]:
+                for _node in _request["node"]:
+                    out.append(
+                        {
+                            "Request ID": _request["id"],
+                            "Time Created": _request["time_create"],
+                            "Requested by": _request["requested_by"],
+                            "Approval": _request["approval"],
+                            "Node": _node["name"],
+                            "Time decided": _node["time_decided"],
+                            "Decided by": _node["decided_by"],
+                        }
+                    )
+            df = pandas.json_normalize(out)
+            return format_dates(df, ["Time Created", "Time decided"])
+
     async def blockreplicasummary(self, human_readable=None, **params):
         """Show authentication state and abilities
         Parameters
