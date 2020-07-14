@@ -145,6 +145,12 @@ class Rucio:
         method = "/".join(["dids", scope, name, "dids"])
         return await self.getjson(method)
 
+    async def list_replicas(self, scope, name):
+        scope = quote(scope, safe="")
+        name = quote(name, safe="")
+        method = "/".join(["replicas", scope, name])
+        return await self.getjson(method)
+
     async def list_dataset_replicas(self, scope, name):
         scope = quote(scope, safe="")
         name = quote(name, safe="")
