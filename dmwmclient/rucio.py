@@ -156,3 +156,15 @@ class Rucio:
         name = quote(name, safe="")
         method = "/".join(["replicas", scope, name, "datasets"])
         return await self.getjson(method)
+
+    async def set_local_account_limit(self, account, rse, nbytes):
+        await self.check_token()
+        method = "/".join(["accountlimits", "local", account, rse])
+        data = {"bytes": int(nbytes)}
+        request = self.client.build_request(
+            method="POST", url=self.host.join(method), json=data, headers=self._headers,
+        )
+        result = await self.client.send(request)
+        if result.status_code == 201:
+            return result.json()
+        raise ValueError(f"Received {result.status_code} status while creating rule")
