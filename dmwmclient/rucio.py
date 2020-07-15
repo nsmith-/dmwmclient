@@ -66,7 +66,9 @@ class Rucio:
                 response = await self.client.send(token_req)
                 m = self._lifetime.match(response.text)
                 if not m:
-                    raise RuntimeError("Bad response from auth endpoint:\n" + response.text)
+                    raise RuntimeError(
+                        "Bad response from auth endpoint:\n" + response.text
+                    )
                 ts = m.groups()[0]
                 self._token_expiration = datetime.datetime(*map(int, ts.split(",")))
 
