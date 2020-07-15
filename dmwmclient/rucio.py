@@ -168,5 +168,5 @@ class Rucio:
         )
         result = await self.client.send(request)
         if result.status_code == 201:
-            return result.json()
+            return result.text
         raise ValueError(f"Received {result.status_code} status while creating rule")
