@@ -7,6 +7,7 @@ from .reqmgr import ReqMgr
 from .dynamo import Dynamo
 from .mcm import McM
 from .msmgr import MSMgr
+from .rucio import Rucio
 
 
 class Client:
@@ -19,6 +20,7 @@ class Client:
         self.dynamo = Dynamo(self.baseclient)
         self.mcm = McM(self.baseclient)
         self.msmgr = MSMgr(self.baseclient)
+        self.rucio = Rucio(self.baseclient)
 
 
 __all__ = [
