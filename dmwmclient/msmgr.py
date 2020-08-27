@@ -17,7 +17,7 @@ class MSMgr:
         self.baseurl = httpx.URL(msmgr_base)
 
     async def transfer_ids(self, workflowName=None):
-        """ Request stuck transfer IDs
+        """Request stuck transfer IDs
 
         Specify workflow name
 

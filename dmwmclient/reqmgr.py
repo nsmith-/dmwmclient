@@ -53,7 +53,7 @@ class ReqMgr:
         return df
 
     async def stuck_transfers(self, timedelta=14):
-        """ Request stuck input datasets
+        """Request stuck input datasets
 
         Default time delta is 14.
 

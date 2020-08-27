@@ -2,9 +2,7 @@ import httpx
 
 
 class McM:
-    """McM client
-
-    """
+    """McM client"""
 
     defaults = {
         # McM REST endpoint URL with trailing slash

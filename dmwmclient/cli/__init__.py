@@ -13,7 +13,11 @@ def cli():
         formatter_class=lambda prog: argparse.RawTextHelpFormatter(prog, width=88),
     )
     parser.add_argument(
-        "-v", "--verbose", action="count", default=0, help="Verbosity",
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="Verbosity",
     )
     parser.add_argument(
         "--proxy",

@@ -92,7 +92,9 @@ class DataSvc:
         """
         resjson = await self.jsonmethod("nodes", **params)
         df = pandas.json_normalize(
-            resjson["phedex"], record_path="node", record_prefix="node.",
+            resjson["phedex"],
+            record_path="node",
+            record_prefix="node.",
         )
 
         return df

@@ -55,8 +55,10 @@ class Rucio:
                     response.headers["X-Rucio-Auth-Token-Expires"],
                     "%a, %d %b %Y %H:%M:%S %Z",
                 )
-            elif validate or self._token_expiration < datetime.datetime.utcnow() + datetime.timedelta(
-                minutes=5
+            elif (
+                validate
+                or self._token_expiration
+                < datetime.datetime.utcnow() + datetime.timedelta(minutes=5)
             ):
                 token_req = self.client.build_request(
                     method="GET",
@@ -164,7 +166,10 @@ class Rucio:
         method = "/".join(["accountlimits", "local", account, rse])
         data = {"bytes": int(nbytes)}
         request = self.client.build_request(
-            method="POST", url=self.host.join(method), json=data, headers=self._headers,
+            method="POST",
+            url=self.host.join(method),
+            json=data,
+            headers=self._headers,
         )
         result = await self.client.send(request)
         if result.status_code == 201:

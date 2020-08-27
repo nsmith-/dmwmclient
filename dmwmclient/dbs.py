@@ -24,7 +24,9 @@ class DBS:
 
     async def pandasmethod(self, method, **params):
         req = self.client.build_request(
-            method="GET", url=self.baseurl.join(method), params=params,
+            method="GET",
+            url=self.baseurl.join(method),
+            params=params,
         )
         res = await self.client.send(req, timeout=30)
         return pandas.read_json(res.content)
