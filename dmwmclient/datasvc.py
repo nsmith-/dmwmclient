@@ -600,8 +600,8 @@ class DataSvc:
         resjson = await self.jsonmethod("requestlist", **params)
         out = []
         if human_readable is not None and type(human_readable) is not bool:
-            print("Wrong human_readable parameter type")
             df = pandas.json_normalize(out)
+            raise Exception("Wrong human_readable parameter type")
             return df
         elif human_readable is None or human_readable is False:
             for _request in resjson["phedex"]["request"]:
