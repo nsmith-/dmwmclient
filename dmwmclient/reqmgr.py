@@ -20,7 +20,9 @@ class ReqMgr:
         self.client = client
         self.baseurl = httpx.URL(reqmgr_base)
 
-    async def transitions(self, inputdataset=None, outputdataset=None):
+    async def transitions(
+        self, inputdataset=None, outputdataset=None, mc_pileup=None, status=None
+    ):
         """Request transitions
 
         Specify either input or output dataset.
@@ -34,6 +36,10 @@ class ReqMgr:
             params["inputdataset"] = inputdataset
         if outputdataset is not None:
             params["outputdataset"] = outputdataset
+        if mc_pileup is not None:
+            params["mc_pileup"] = mc_pileup
+        if status is not None:
+            params["status"] = status
         result = await self.client.getjson(self.baseurl.join("request"), params=params)
 
         flat = []
@@ -79,3 +85,23 @@ class ReqMgr:
         df = pandas.json_normalize(stuck_data)
         format_dates(df, ["UpdateTime"])
         return df
+
+    async def active_request_datasets(self):
+        params = {
+            "status": "ACTIVE",
+            "mask": [
+                "InputDataset",
+                "OutputDatasets",
+                "IncludeParents",
+                "MCPileup",
+                "Team",
+            ],
+        }
+        result = await self.client.getjson(self.baseurl.join("request"), params=params)
+        result = result["result"][0]
+        for name, request in result.items():
+            request["requestname"] = name
+            # normalize schema a bit
+            if isinstance(request["InputDataset"], str):
+                request["InputDataset"] = [request["InputDataset"]]
+        return list(result.values())

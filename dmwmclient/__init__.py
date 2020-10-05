@@ -10,17 +10,17 @@ from .msmgr import MSMgr
 from .rucio import Rucio
 
 
-class Client:
-    def __init__(self, usercert=None):
-        self.baseclient = RESTClient(usercert=usercert)
-        self.datasvc = DataSvc(self.baseclient)
-        self.unified = Unified(self.baseclient)
-        self.dbs = DBS(self.baseclient)
-        self.reqmgr = ReqMgr(self.baseclient)
-        self.dynamo = Dynamo(self.baseclient)
-        self.mcm = McM(self.baseclient)
-        self.msmgr = MSMgr(self.baseclient)
-        self.rucio = Rucio(self.baseclient)
+class Client(RESTClient):
+    def __init__(self, usercert=None, certdir=None):
+        super().__init__(usercert, certdir)
+        self.datasvc = DataSvc(self)
+        self.unified = Unified(self)
+        self.dbs = DBS(self)
+        self.reqmgr = ReqMgr(self)
+        self.dynamo = Dynamo(self)
+        self.mcm = McM(self)
+        self.msmgr = MSMgr(self)
+        self.rucio = Rucio(self)
 
 
 __all__ = [
