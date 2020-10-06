@@ -84,7 +84,9 @@ class Rucio:
         )
         result = await self.client.send(request, timeout=timeout, retries=retries)
         if result.status_code != 200:
-            raise IOError("Failed to execute request {request}")
+            raise IOError(
+                f"Failed to execute request {request}, result: ({result.status_code}) {result.text}"
+            )
         try:
             items = filter(len, result.text.split("\n"))
             return list(map(json.loads, items))
