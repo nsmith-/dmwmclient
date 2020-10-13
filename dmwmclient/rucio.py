@@ -40,7 +40,11 @@ class Rucio:
 
     async def check_token(self, validate=False):
         async with self._token_lock:
-            if self._token_expiration is None:
+            if (
+                self._token_expiration is None
+                or self._token_expiration
+                < datetime.datetime.utcnow() + datetime.timedelta(minutes=5)
+            ):
                 token_req = self.client.build_request(
                     method="GET",
                     url=self.auth_host.join("auth/x509_proxy"),
@@ -55,11 +59,7 @@ class Rucio:
                     response.headers["X-Rucio-Auth-Token-Expires"],
                     "%a, %d %b %Y %H:%M:%S %Z",
                 )
-            elif (
-                validate
-                or self._token_expiration
-                < datetime.datetime.utcnow() + datetime.timedelta(minutes=5)
-            ):
+            elif validate:
                 token_req = self.client.build_request(
                     method="GET",
                     url=self.auth_host.join("auth/validate"),
@@ -74,12 +74,13 @@ class Rucio:
                 ts = m.groups()[0]
                 self._token_expiration = datetime.datetime(*map(int, ts.split(",")))
 
-    async def getjson(self, method, params=None, timeout=None, retries=1):
+    async def jsonmethod(self, method, path, params=None, jsondata=None, timeout=None, retries=1):
         await self.check_token()
         request = self.client.build_request(
-            method="GET",
-            url=self.host.join(method),
+            method=method,
+            url=self.host.join(path),
             params=params,
+            json=jsondata,
             headers=self._headers,
         )
         result = await self.client.send(request, timeout=timeout, retries=retries)
@@ -93,6 +94,9 @@ class Rucio:
         except json.JSONDecodeError:
             logger.debug(f"Result content:\n{result.text}")
             raise IOError(f"Failed to decode json for request {request}")
+
+    async def getjson(self, path, params=None, timeout=None, retries=1):
+        return await self.jsonmethod("GET", path, params, timeout, retries)
 
     async def whoami(self):
         return await self.getjson("accounts/whoami")
