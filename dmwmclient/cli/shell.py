@@ -8,7 +8,7 @@ class Shell:
         parser.set_defaults(command=cls)
         return parser
 
-    def __init__(self, client):
+    def __init__(self, client, args):
         embed(
             header="Local variables: client (%r)" % client,
             using="asyncio",

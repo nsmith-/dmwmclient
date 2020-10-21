@@ -12,7 +12,7 @@ class Test:
         parser.set_defaults(command=cls)
         return parser
 
-    def __init__(self, client):
+    def __init__(self, client, args):
         self.client = client
         asyncio.run(self.go())
 

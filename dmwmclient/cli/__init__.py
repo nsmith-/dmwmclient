@@ -1,10 +1,10 @@
 import argparse
 import logging
-from .. import Client
-from ..restclient import locate_proxycert
-from .shell import Shell
-from .test import Test
-from .unified import UnifiedTransferStatus
+from dmwmclient import Client
+from dmwmclient.restclient import locate_proxycert
+from dmwmclient.cli.shell import Shell
+from dmwmclient.cli.test import Test
+from dmwmclient.cli.ruciosummary import RucioSummary
 
 
 def cli():
@@ -27,7 +27,7 @@ def cli():
     subparsers = parser.add_subparsers(help="sub-command help")
     Shell.register(subparsers)
     Test.register(subparsers)
-    UnifiedTransferStatus.register(subparsers)
+    RucioSummary.register(subparsers)
 
     args = parser.parse_args()
 
@@ -37,6 +37,6 @@ def cli():
     client = Client(usercert=locate_proxycert() if args.proxy else None)
 
     if hasattr(args, "command"):
-        args.command(client=client)
+        args.command(client=client, args=args)
     else:
         parser.parse_args(["-h"])
