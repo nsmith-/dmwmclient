@@ -27,7 +27,7 @@ class RucioSummary:
     def __init__(self, client, args):
         self.client = client
         self.out = args.out
-        asyncio.run(self.go())
+        asyncio.get_event_loop().run_until_complete(self.go())
 
     async def go(self):
         import pandas as pd

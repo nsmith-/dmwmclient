@@ -14,7 +14,7 @@ class Test:
 
     def __init__(self, client, args):
         self.client = client
-        asyncio.run(self.go())
+        asyncio.get_event_loop().run_until_complete(self.go())
 
     async def go(self):
         res = await self.client.datasvc.jsonmethod("bounce", asdf="hi there")
