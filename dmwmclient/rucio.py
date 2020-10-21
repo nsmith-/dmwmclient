@@ -96,7 +96,7 @@ class Rucio:
             raise IOError(f"Failed to decode json for request {request}")
 
     async def getjson(self, path, params=None, timeout=None, retries=1):
-        return await self.jsonmethod("GET", path, params, timeout, retries)
+        return await self.jsonmethod("GET", path, params=params, timeout=timeout, retries=retries)
 
     async def whoami(self):
         return await self.getjson("accounts/whoami")
