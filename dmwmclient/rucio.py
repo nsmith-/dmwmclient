@@ -74,7 +74,9 @@ class Rucio:
                 ts = m.groups()[0]
                 self._token_expiration = datetime.datetime(*map(int, ts.split(",")))
 
-    async def jsonmethod(self, method, path, params=None, jsondata=None, timeout=None, retries=1):
+    async def jsonmethod(
+        self, method, path, params=None, jsondata=None, timeout=None, retries=1
+    ):
         await self.check_token()
         request = self.client.build_request(
             method=method,
@@ -96,7 +98,9 @@ class Rucio:
             raise IOError(f"Failed to decode json for request {request}")
 
     async def getjson(self, path, params=None, timeout=None, retries=1):
-        return await self.jsonmethod("GET", path, params=params, timeout=timeout, retries=retries)
+        return await self.jsonmethod(
+            "GET", path, params=params, timeout=timeout, retries=retries
+        )
 
     async def whoami(self):
         return await self.getjson("accounts/whoami")
@@ -126,6 +130,20 @@ class Rucio:
         if result.status_code in {201, 409}:
             return result.json()
         raise ValueError(f"Received {result.status_code} status while creating rule")
+
+    async def list_rules(self, **filters):
+        """List rules by filters
+
+        Possible filters: anything in the ReplicationRule model it seems
+        """
+        return await self.getjson("rules/", params=filters)
+
+    async def examine_rule(self, rule_id):
+        """Get rule analysis
+
+        Note: this can take an extended time to return
+        """
+        return await self.getjson(f"rules/{rule_id}/analysis", timeout=60)
 
     async def list_did_rules(self, scope, name):
         scope = quote(scope, safe="")
