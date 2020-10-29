@@ -56,10 +56,8 @@ class Rucio:
                     response.headers["X-Rucio-Auth-Token-Expires"],
                     "%a, %d %b %Y %H:%M:%S %Z",
                 )
-            elif (
-                validate
-                or self._token_expiration
-                < datetime.datetime.utcnow() + datetime.timedelta(minutes=5)
+            elif validate or self._token_expiration < datetime.datetime.utcnow() + datetime.timedelta(
+                minutes=5
             ):
                 token_req = self.client.build_request(
                     method="GET",
@@ -156,19 +154,19 @@ class Rucio:
         scope = quote(scope, safe="")
         name = quote(name, safe="")
         method = "/".join(["replicas", scope, name])
-        data =  await self.getjson(method)
+        data = await self.getjson(method)
         out = []
         for instance in data:
-            for _pfn in instance['pfns'].keys():
+            for _pfn in instance["pfns"].keys():
                 out.append(
                     {
-                        'adler_32': instance['adler32'],
-                        'lfn': instance['name'],
-                        'bytes': instance['bytes'],
-                        'pfn': _pfn,
-                        'replica': instance['pfns'][_pfn]['rse']
-                      }
-                  )
+                        "adler_32": instance["adler32"],
+                        "lfn": instance["name"],
+                        "bytes": instance["bytes"],
+                        "pfn": _pfn,
+                        "replica": instance["pfns"][_pfn]["rse"],
+                    }
+                )
         df = pandas.json_normalize(out)
         return df
 
@@ -183,10 +181,7 @@ class Rucio:
         method = "/".join(["accountlimits", "local", account, rse])
         data = {"bytes": int(nbytes)}
         request = self.client.build_request(
-            method="POST",
-            url=self.host.join(method),
-            json=data,
-            headers=self._headers,
+            method="POST", url=self.host.join(method), json=data, headers=self._headers,
         )
         result = await self.client.send(request)
         if result.status_code == 201:
