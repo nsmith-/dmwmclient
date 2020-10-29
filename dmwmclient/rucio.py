@@ -6,6 +6,7 @@ import re
 import logging
 import httpx
 from urllib.parse import quote
+import pandas
 
 
 logger = logging.getLogger(__name__)
@@ -155,7 +156,21 @@ class Rucio:
         scope = quote(scope, safe="")
         name = quote(name, safe="")
         method = "/".join(["replicas", scope, name])
-        return await self.getjson(method)
+        data =  await self.getjson(method)
+        out = []
+        for instance in data:
+            for _pfn in instance['pfns'].keys():
+                out.append(
+                    {
+                        'adler_32': instance['adler32'],
+                        'lfn': instance['name'],
+                        'bytes': instance['bytes'],
+                        'pfn': _pfn,
+                        'replica': instance['pfns'][_pfn]['rse']
+                      }
+                  )
+        df = pandas.json_normalize(out)
+        return df
 
     async def list_dataset_replicas(self, scope, name):
         scope = quote(scope, safe="")

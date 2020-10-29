@@ -3,7 +3,6 @@ import httpx
 
 class Unified:
     """Unified REST API
-
     A random assortment of URLs
     """
 
