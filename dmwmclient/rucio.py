@@ -148,7 +148,20 @@ class Rucio:
         scope = quote(scope, safe="")
         name = quote(name, safe="")
         method = "/".join(["dids", scope, name, "dids"])
-        return await self.getjson(method)
+        data = await self.getjson(method)
+        out = []
+        for key in data:
+            out.append(
+                    {
+                        "adler_32": key["adler32"],
+                        "lfn": key["name"],
+                        "bytes": key["bytes"],
+                        "scope": key["scope"],
+                        "type": key["type"]
+                    }
+                )
+        df = pandas.json_normalize(out)
+        return df
 
     async def list_replicas(self, scope, name):
         scope = quote(scope, safe="")
