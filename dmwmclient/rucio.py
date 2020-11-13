@@ -164,6 +164,12 @@ class Rucio:
         return df
 
     async def list_replicas(self, scope, name):
+        """Shows the file replicas.
+        Parameters
+        ----------
+        name                  name of container, dataset or file.
+        scope                 scope = 'cms'.
+        """
         scope = quote(scope, safe="")
         name = quote(name, safe="")
         method = "/".join(["replicas", scope, name])
@@ -184,10 +190,38 @@ class Rucio:
         return df
 
     async def list_dataset_replicas(self, scope, name):
+        """Shows replicas of datasets (former block in phedex context).
+        Parameters
+        ----------
+        name                  name of the dataset (block in phedex context). This function returns an 
+                              empty dataframe if a name of a container (former dataset in phedex context)
+                              is passed as a parameter instead of the name of a dataset.
+        scope                 scope = 'cms'.
+        """
         scope = quote(scope, safe="")
         name = quote(name, safe="")
         method = "/".join(["replicas", scope, name, "datasets"])
-        return await self.getjson(method)
+        data = await self.getjson(method)
+        out = []
+        for element in data:
+            out.append(
+                {
+                    'accessed_at': element['accessed_at'],
+                    'dataset_name': element['name'],
+                    'rse': element['rse'],
+                    'created_at': element['created_at'],
+                    'Total_bytes': element['bytes'],
+                    'Bytes_at_rse': element['available_bytes'],
+                    'state': element['state'],
+                    'updated_at': element['updated_at'],
+                    'Total_files': element['length'],
+                    'files_at_rse': element['available_length'],
+                    'rse_id': element['rse_id']
+                }
+            )
+        df = pandas.json_normalize(out)
+        return df
+
 
     async def set_local_account_limit(self, account, rse, nbytes):
         await self.check_token()
