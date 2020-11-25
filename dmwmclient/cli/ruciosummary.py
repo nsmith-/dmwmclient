@@ -149,7 +149,7 @@ class RucioSummary:
         rule_volume.plot.bar(ax=ax, color=account_colors, width=0.9)
         ax.set_xlabel("RSE")
         ax.set_ylabel("Used volume")
-        ax.legend(title="Source")
+        ax.legend(title="Source", ncol=3)
         fig.savefig(f"{self.out}/rucio_summary_absolute.pdf", bbox_inches="tight")
 
         fig, ax = plt.subplots(figsize=(15, 5))
@@ -167,7 +167,7 @@ class RucioSummary:
         ax.set_xlabel("RSE")
         ax.set_ylabel("Usage relative to reaper limit")
         ax.axhline(1, linestyle="dotted", color="black")
-        ax.legend(title="Source")
+        ax.legend(title="Source", ncol=3)
         fig.savefig(f"{self.out}/rucio_summary_relative.pdf", bbox_inches="tight")
 
         fig, ax = plt.subplots(figsize=(15, 5))
