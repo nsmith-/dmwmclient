@@ -31,7 +31,7 @@ setup(
     download_url="https://github.com/nsmith-/dmwmclient/releases",
     license="BSD 3-clause",
     test_suite="tests",
-    install_requires=["httpx==0.12", "lxml", "ipython", "pandas>=0.25"],
+    install_requires=["httpx==0.12", "lxml", "ipython", "pandas>=1.1.0"],
     extras_require={
         "dev": ["flake8", "black", "pytest-asyncio"],
         "cli": ["matplotlib"],
