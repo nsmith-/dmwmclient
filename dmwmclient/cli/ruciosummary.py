@@ -2,6 +2,7 @@ import logging
 import asyncio
 from itertools import chain
 from dmwmclient.asyncutil import gather
+from matplotlib.ticker import EngFormatter
 
 
 logger = logging.getLogger(__name__)
@@ -40,49 +41,67 @@ class RucioSummary:
         )
         ddm_rses = sorted(item["rse"] for item in ddm_rses)
 
-        async def get_usage(rse):
-            usage = await self.client.rucio.getjson(f"rses/{rse}/usage")
-            for item in usage:
-                del item["updated_at"]
-                del item["rse_id"]
-                del item["files"]
-            return usage
-
-        ddm_rse_usage = (
-            pd.json_normalize(
-                chain.from_iterable(await gather(map(get_usage, ddm_rses), 5))
-            )
-            .set_index(["rse", "source"])
-            .unstack()
-            .fillna(0)
-        )
-
-        async def get_quota(rse):
-            info = await self.client.rucio.getjson(f"rses/{rse}/attr/")
-            return info[0]["ddm_quota"]
-
         async def get_sync_usage(rse):
             account = "sync_" + rse.lower()
             usage = await self.client.rucio.getjson(
                 f"accounts/{account}/usage/local/{rse}"
             )
-            return usage[0]["bytes"]
-
-        ddm_usage = pd.DataFrame(
-            {
-                "rse": ddm_rses,
-                "ddm_quota": await gather(map(get_quota, ddm_rses), 5),
-                "sync": await gather(map(get_sync_usage, ddm_rses), 5),
+            usage = usage[0]
+            return {
+                "files": usage["files"],
+                "used": usage["bytes"],
+                "rse": usage["rse"],
+                "free": usage["bytes_remaining"],
+                "total": usage["bytes_limit"],
+                "source": "sync",
             }
-        ).set_index("rse")
 
-        async def account_usage(account):
+        async def get_rse_usage(rse):
+            usage = await self.client.rucio.getjson(f"rses/{rse}/usage")
+            for item in usage:
+                del item["updated_at"]
+                del item["rse_id"]
+            attr = await self.client.rucio.getjson(f"rses/{rse}/attr/")
+            attr = attr[0]
+            limits = await self.client.rucio.getjson(f"rses/{rse}/limits")
+            limits = limits[0]
+            reaper_info = {
+                "source": "reaper",
+                "rse": rse,
+                # this is pretty hacky
+                "free": limits.get("MinFreeSpace", None),
+            }
+            for item in usage:
+                if item["source"] == attr.get("source_for_used_space", "storage"):
+                    reaper_info["used"] = item["used"]
+                if item["source"] == attr.get("source_for_total_space", "storage"):
+                    reaper_info["total"] = item["total"]
+            reaper_info.setdefault("total", float(attr["ddm_quota"]))
+            usage.append(reaper_info)
+            usage.append(await get_sync_usage(rse))
+            return usage
+
+        rse_usage = (
+            pd.json_normalize(
+                chain.from_iterable(await gather(map(get_rse_usage, ddm_rses), 5))
+            )
+            .set_index(["rse", "source"])
+            .unstack()
+        )
+
+        async def get_account_usage(account):
             usage = await self.client.rucio.getjson(f"accounts/{account}/usage/local")
             usage = pd.json_normalize(usage)
-            usage["account"] = account
-            del usage["rse_id"]
-            del usage["bytes_remaining"]
-            return usage
+            return pd.DataFrame(
+                {
+                    "files": usage["files"],
+                    "used": usage["bytes"],
+                    "rse": usage["rse"],
+                    "free": usage["bytes_remaining"],
+                    "total": usage["bytes_limit"],
+                    "source": account,
+                }
+            )
 
         accounts = [
             "transfer_ops",
@@ -90,49 +109,71 @@ class RucioSummary:
             "wmcore_transferor",
             "wmcore_output",
         ]
-        usage = pd.concat(await gather(map(account_usage, accounts), 1))
-        usage = usage.set_index(["rse", "account"]).unstack()
-        usage = usage.loc[ddm_rses]
-        usage.loc[:, ("bytes", "sync")] = ddm_usage["sync"]
-        usage.loc[:, ("bytes_limit", "ddm_quota")] = ddm_usage["ddm_quota"]
-        usage = pd.concat([usage, ddm_rse_usage], axis=1).astype(float)
+        account_usage = (
+            pd.concat(await gather(map(get_account_usage, accounts), 1))
+            .set_index(["rse", "source"])
+            .unstack()
+            .loc[ddm_rses]
+        )
+        usage = pd.concat([rse_usage, account_usage], axis=1)
+        usage.loc["Total"] = usage.sum()
+        usage.to_pickle(f"{self.out}/rucio_summary.pkl.gz")
+
+        volume = pd.DataFrame(
+            {
+                "Locked": usage["used", "rucio"] - usage["used", "expired"].fillna(0),
+                "Dynamic": usage["used", "expired"] - usage["used", "obsolete"],
+                "Obsolete": usage["used", "obsolete"],
+            }
+        ).fillna(0)
+        volume_colors = {
+            "Locked": "lightblue",
+            "Dynamic": "lightgreen",
+            "Obsolete": "tomato",
+        }
+
+        account_colors = {
+            "transfer_ops": "orange",
+            "wma_prod": "red",
+            "wmcore_transferor": "green",
+            "wmcore_output": "blue",
+            "sync": "grey",
+        }
+        rule_volume = usage["used"].filter(account_colors, axis=1).fillna(0)
+
+        formatter = EngFormatter(unit="B")
 
         fig, ax = plt.subplots(figsize=(15, 5))
-        usagepb = usage.fillna(0) / 1e15
-        usagepb.plot.bar(
-            y=("used", "rucio"),
-            ax=ax,
-            color="black",
-            alpha=0.3,
-            width=0.8,
-            label="Total",
-        )
-        usagepb.plot.bar(y="bytes", ax=ax, width=0.8)
+        ax.yaxis.set_major_formatter(formatter)
+        volume.plot.bar(ax=ax, stacked=True, color=volume_colors, width=0.9)
+        rule_volume.plot.bar(ax=ax, color=account_colors, width=0.9)
         ax.set_xlabel("RSE")
-        ax.set_ylabel("Petabytes")
+        ax.set_ylabel("Used volume")
+        ax.legend(title="Source")
         fig.savefig(f"{self.out}/rucio_summary_absolute.pdf", bbox_inches="tight")
 
         fig, ax = plt.subplots(figsize=(15, 5))
-        usagerel = usage.divide(usage["bytes_limit", "ddm_quota"], axis=0)
-        usagerel.plot.bar(
-            y=("used", "rucio"),
-            ax=ax,
-            color="black",
-            alpha=0.3,
-            width=0.8,
-            label="Total",
+        limit = usage["total", "reaper"]
+        target = 1 - usage["free", "reaper"] / usage["total", "reaper"]
+        volume.divide(limit, axis=0).plot.bar(
+            ax=ax, stacked=True, color=volume_colors, width=0.9
         )
-        usagerel.plot.bar(y="bytes", ax=ax, width=0.8)
+        ax.plot(
+            target, marker=5, color="black", linestyle="none", label="Target occupancy"
+        )
+        rule_volume.divide(limit, axis=0).plot.bar(
+            ax=ax, color=account_colors, width=0.9
+        )
         ax.set_xlabel("RSE")
-        ax.set_ylabel("Usage relative to DDM quota")
+        ax.set_ylabel("Usage relative to reaper limit")
         ax.axhline(1, linestyle="dotted", color="black")
-        ax.axhline(1 / 0.8, linestyle="dotted", color="orange")
+        ax.legend(title="Source")
         fig.savefig(f"{self.out}/rucio_summary_relative.pdf", bbox_inches="tight")
 
         fig, ax = plt.subplots(figsize=(15, 5))
         mstransferor = (
-            usage["bytes", "wmcore_transferor"]
-            / usage["bytes_limit", "wmcore_transferor"]
+            account_usage["used", "wmcore_transferor"]
+            / account_usage["total", "wmcore_transferor"]
         )
         mstransferor.plot.bar(ax=ax)
         ax.set_xlabel("RSE")
@@ -141,10 +182,8 @@ class RucioSummary:
         fig.savefig(f"{self.out}/rucio_summary_mstransferor.pdf", bbox_inches="tight")
 
         fig, ax = plt.subplots(figsize=(15, 5))
-        wmaprod = usage["bytes", "wma_prod"] / 1e15
+        wmaprod = account_usage["used", "wma_prod"] / 1e15
         wmaprod.plot.bar(ax=ax)
         ax.set_xlabel("RSE")
         ax.set_ylabel("WMAgent usage [PB]")
         fig.savefig(f"{self.out}/rucio_summary_wma_prod.pdf", bbox_inches="tight")
-
-        usage.to_pickle(f"{self.out}/rucio_summary.pkl.gz")
