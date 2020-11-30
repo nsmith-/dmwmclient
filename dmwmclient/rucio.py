@@ -123,10 +123,48 @@ class Rucio:
         raise ValueError(f"Received {result.status_code} status while creating rule")
 
     async def list_did_rules(self, scope, name):
+        """Shows the rules tha apply to a specific did.
+        Parameters
+        ----------
+        name                  name of container, dataset or file.
+        scope                 scope = 'cms'.
+        """
         scope = quote(scope, safe="")
         name = quote(name, safe="")
         method = "/".join(["dids", scope, name, "rules"])
-        return await self.getjson(method)
+        data = await self.getjson(method)
+        out = []
+        for dic in data:
+            rse = dic['rse_expression'].split('=', 1)[1]
+            out.append(
+                {
+                    'id': dic['id'],
+                    'locks_ok_cnt': dic['locks_ok_cnt'],
+                    'did_type': dic['did_type'],
+                    'weight': dic['weight'],
+                    'purge_replicas': dic['purge_replicas'],
+                    'rse_expression': rse,
+                    'updated_at': dic['updated_at'],
+                    'activity': dic['activity'],
+                    'child_rule_id': dic['child_rule_id'],
+                    'locks_stuck_cnt': dic['locks_stuck_cnt'],
+                    'locks_replicating_cnt': dic['locks_replicating_cnt'],
+                    'copies': dic['copies'],
+                    'comments': dic['comments'],
+                    'split_container': dic['split_container'],
+                    'state': dic['state'],
+                    'scope': dic['scope'],
+                    'subscription_id': dic['subscription_id'],
+                    'stuck_at': dic['stuck_at'],
+                    'expires_at': dic['expires_at'],
+                    'account': dic['account'],
+                    'locked': dic['locked'],
+                    'name': dic['name'],
+                    'grouping': dic['grouping']
+                }
+            )
+        df = pandas.json_normalize(out)
+        return df
 
     async def delete_rule(self, rule_id, purge_replicas=None):
         await self.check_token()
