@@ -151,18 +151,26 @@ class Rucio:
         method = "/".join(["dids", scope, name, "rules"])
         return await self.getjson(method)
 
-    async def delete_rule(self, rule_id, purge_replicas=None):
+    async def delete_rule(self, rule_id, purge_replicas=None, immediate=False):
         await self.check_token()
-        data = {"purge_replicas": purge_replicas}
-        request = self.client.build_request(
-            method="DELETE",
-            url=self.host.join("rules/" + rule_id),
-            json=data,
-            headers=self._headers,
-        )
+        if immediate:
+            data = {"options": {"lifetime": 0}}
+            request = self.client.build_request(
+                method="PUT",
+                url=self.host.join("rules/" + rule_id),
+                json=data,
+                headers=self._headers,
+            )
+        else:
+            data = {"purge_replicas": purge_replicas}
+            request = self.client.build_request(
+                method="DELETE",
+                url=self.host.join("rules/" + rule_id),
+                json=data,
+                headers=self._headers,
+            )
         result = await self.client.send(request)
-        return result
-        if result.status_code != 200:
+        if result.status_code not in [200, 404]:
             raise ValueError(
                 f"Received {result.status_code} status while deleting rule"
             )
