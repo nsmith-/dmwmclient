@@ -154,12 +154,19 @@ class RucioSummary:
 
         fig, ax = plt.subplots(figsize=(15, 5))
         limit = usage["total", "reaper"]
-        target = 1 - usage["free", "reaper"] / usage["total", "reaper"]
+        occupancy = usage["used", "reaper"] / limit
+        target = 1 - usage["free", "reaper"] / limit
         volume.divide(limit, axis=0).plot.bar(
             ax=ax, stacked=True, color=volume_colors, width=0.9
         )
+        ax.plot(occupancy, marker=5, color="black", linestyle="none", label="Occupancy")
         ax.plot(
-            target, marker=5, color="black", linestyle="none", label="Target occupancy"
+            target,
+            marker=5,
+            color="green",
+            fillstyle="none",
+            linestyle="none",
+            label="Target occupancy",
         )
         rule_volume.divide(limit, axis=0).plot.bar(
             ax=ax, color=account_colors, width=0.9
