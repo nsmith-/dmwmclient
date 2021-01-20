@@ -41,7 +41,11 @@ class Rucio:
 
     async def check_token(self, validate=False):
         async with self._token_lock:
-            if self._token_expiration is None:
+            if (
+                self._token_expiration is None
+                or self._token_expiration
+                < datetime.datetime.utcnow() + datetime.timedelta(minutes=5)
+            ):
                 token_req = self.client.build_request(
                     method="GET",
                     url=self.auth_host.join("auth/x509_proxy"),
@@ -56,9 +60,7 @@ class Rucio:
                     response.headers["X-Rucio-Auth-Token-Expires"],
                     "%a, %d %b %Y %H:%M:%S %Z",
                 )
-            elif validate or self._token_expiration < datetime.datetime.utcnow() + datetime.timedelta(
-                minutes=5
-            ):
+            elif validate:
                 token_req = self.client.build_request(
                     method="GET",
                     url=self.auth_host.join("auth/validate"),
@@ -73,12 +75,15 @@ class Rucio:
                 ts = m.groups()[0]
                 self._token_expiration = datetime.datetime(*map(int, ts.split(",")))
 
-    async def getjson(self, method, params=None, timeout=None, retries=1):
+    async def jsonmethod(
+        self, method, path, params=None, jsondata=None, timeout=None, retries=1
+    ):
         await self.check_token()
         request = self.client.build_request(
-            method="GET",
-            url=self.host.join(method),
+            method=method,
+            url=self.host.join(path),
             params=params,
+            json=jsondata,
             headers=self._headers,
         )
         result = await self.client.send(request, timeout=timeout, retries=retries)
@@ -92,6 +97,11 @@ class Rucio:
         except json.JSONDecodeError:
             logger.debug(f"Result content:\n{result.text}")
             raise IOError(f"Failed to decode json for request {request}")
+
+    async def getjson(self, path, params=None, timeout=None, retries=1):
+        return await self.jsonmethod(
+            "GET", path, params=params, timeout=timeout, retries=retries
+        )
 
     async def whoami(self):
         return await self.getjson("accounts/whoami")
@@ -121,6 +131,20 @@ class Rucio:
         if result.status_code in {201, 409}:
             return result.json()
         raise ValueError(f"Received {result.status_code} status while creating rule")
+
+    async def list_rules(self, **filters):
+        """List rules by filters
+
+        Possible filters: anything in the ReplicationRule model it seems
+        """
+        return await self.getjson("rules/", params=filters)
+
+    async def examine_rule(self, rule_id):
+        """Get rule analysis
+
+        Note: this can take an extended time to return
+        """
+        return await self.getjson(f"rules/{rule_id}/analysis", timeout=60)
 
     async def list_did_rules(self, scope, name):
         """Shows the rules tha apply to a specific did.
@@ -166,18 +190,26 @@ class Rucio:
         df = pandas.json_normalize(out)
         return df
 
-    async def delete_rule(self, rule_id, purge_replicas=None):
+    async def delete_rule(self, rule_id, purge_replicas=None, immediate=False):
         await self.check_token()
-        data = {"purge_replicas": purge_replicas}
-        request = self.client.build_request(
-            method="DELETE",
-            url=self.host.join("rules/" + rule_id),
-            json=data,
-            headers=self._headers,
-        )
+        if immediate:
+            data = {"options": {"lifetime": 0}}
+            request = self.client.build_request(
+                method="PUT",
+                url=self.host.join("rules/" + rule_id),
+                json=data,
+                headers=self._headers,
+            )
+        else:
+            data = {"purge_replicas": purge_replicas}
+            request = self.client.build_request(
+                method="DELETE",
+                url=self.host.join("rules/" + rule_id),
+                json=data,
+                headers=self._headers,
+            )
         result = await self.client.send(request)
-        return result
-        if result.status_code != 200:
+        if result.status_code not in [200, 404]:
             raise ValueError(
                 f"Received {result.status_code} status while deleting rule"
             )
