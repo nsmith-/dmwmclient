@@ -41,10 +41,8 @@ class Rucio:
 
     async def check_token(self, validate=False):
         async with self._token_lock:
-            if (
-                self._token_expiration is None
-                or self._token_expiration
-                < datetime.datetime.utcnow() + datetime.timedelta(minutes=5)
+            if self._token_expiration is None or self._token_expiration < datetime.datetime.utcnow() + datetime.timedelta(
+                minutes=5
             ):
                 token_req = self.client.build_request(
                     method="GET",
@@ -159,32 +157,32 @@ class Rucio:
         data = await self.getjson(method)
         out = []
         for dic in data:
-            rse = dic['rse_expression']#.split('=', 1)[1]
+            rse = dic["rse_expression"]  # .split('=', 1)[1]
             out.append(
                 {
-                    'id': dic['id'],
-                    'locks_ok_cnt': dic['locks_ok_cnt'],
-                    'did_type': dic['did_type'],
-                    'weight': dic['weight'],
-                    'purge_replicas': dic['purge_replicas'],
-                    'rse_expression': rse,
-                    'updated_at': dic['updated_at'],
-                    'activity': dic['activity'],
-                    'child_rule_id': dic['child_rule_id'],
-                    'locks_stuck_cnt': dic['locks_stuck_cnt'],
-                    'locks_replicating_cnt': dic['locks_replicating_cnt'],
-                    'copies': dic['copies'],
-                    'comments': dic['comments'],
-                    'split_container': dic['split_container'],
-                    'state': dic['state'],
-                    'scope': dic['scope'],
-                    'subscription_id': dic['subscription_id'],
-                    'stuck_at': dic['stuck_at'],
-                    'expires_at': dic['expires_at'],
-                    'account': dic['account'],
-                    'locked': dic['locked'],
-                    'name': dic['name'],
-                    'grouping': dic['grouping']
+                    "id": dic["id"],
+                    "locks_ok_cnt": dic["locks_ok_cnt"],
+                    "did_type": dic["did_type"],
+                    "weight": dic["weight"],
+                    "purge_replicas": dic["purge_replicas"],
+                    "rse_expression": rse,
+                    "updated_at": dic["updated_at"],
+                    "activity": dic["activity"],
+                    "child_rule_id": dic["child_rule_id"],
+                    "locks_stuck_cnt": dic["locks_stuck_cnt"],
+                    "locks_replicating_cnt": dic["locks_replicating_cnt"],
+                    "copies": dic["copies"],
+                    "comments": dic["comments"],
+                    "split_container": dic["split_container"],
+                    "state": dic["state"],
+                    "scope": dic["scope"],
+                    "subscription_id": dic["subscription_id"],
+                    "stuck_at": dic["stuck_at"],
+                    "expires_at": dic["expires_at"],
+                    "account": dic["account"],
+                    "locked": dic["locked"],
+                    "name": dic["name"],
+                    "grouping": dic["grouping"],
                 }
             )
         df = pandas.json_normalize(out)
@@ -222,14 +220,14 @@ class Rucio:
         out = []
         for key in data:
             out.append(
-                    {
-                        "adler_32": key["adler32"],
-                        "lfn": key["name"],
-                        "bytes": key["bytes"],
-                        "scope": key["scope"],
-                        "type": key["type"]
-                    }
-                )
+                {
+                    "adler_32": key["adler32"],
+                    "lfn": key["name"],
+                    "bytes": key["bytes"],
+                    "scope": key["scope"],
+                    "type": key["type"],
+                }
+            )
         df = pandas.json_normalize(out)
         return df
 
@@ -276,22 +274,21 @@ class Rucio:
         for element in data:
             out.append(
                 {
-                    'accessed_at': element['accessed_at'],
-                    'dataset_name': element['name'],
-                    'rse': element['rse'],
-                    'created_at': element['created_at'],
-                    'Total_bytes': element['bytes'],
-                    'Bytes_at_rse': element['available_bytes'],
-                    'state': element['state'],
-                    'updated_at': element['updated_at'],
-                    'Total_files': element['length'],
-                    'files_at_rse': element['available_length'],
-                    'rse_id': element['rse_id']
+                    "accessed_at": element["accessed_at"],
+                    "dataset_name": element["name"],
+                    "rse": element["rse"],
+                    "created_at": element["created_at"],
+                    "Total_bytes": element["bytes"],
+                    "Bytes_at_rse": element["available_bytes"],
+                    "state": element["state"],
+                    "updated_at": element["updated_at"],
+                    "Total_files": element["length"],
+                    "files_at_rse": element["available_length"],
+                    "rse_id": element["rse_id"],
                 }
             )
         df = pandas.json_normalize(out)
         return df
-
 
     async def set_local_account_limit(self, account, rse, nbytes):
         await self.check_token()
