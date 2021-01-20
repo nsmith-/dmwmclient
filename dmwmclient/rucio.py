@@ -135,7 +135,7 @@ class Rucio:
         data = await self.getjson(method)
         out = []
         for dic in data:
-            rse = dic['rse_expression'].split('=', 1)[1]
+            rse = dic['rse_expression']#.split('=', 1)[1]
             out.append(
                 {
                     'id': dic['id'],
