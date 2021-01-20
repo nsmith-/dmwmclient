@@ -261,10 +261,10 @@ class Rucio:
         """Shows replicas of datasets (former block in phedex context).
         Parameters
         ----------
-        name                  name of the dataset (block in phedex context). This function returns an 
-                              empty dataframe if a name of a container (former dataset in phedex context)
-                              is passed as a parameter instead of the name of a dataset.
-        scope                 scope = 'cms'.
+        name                name of the dataset (block in phedex context). This function returns an 
+                            empty dataframe if a name of a container (former dataset in phedex context)
+                            is passed as a parameter instead of the name of a dataset.
+        scope               scope = 'cms'.
         """
         scope = quote(scope, safe="")
         name = quote(name, safe="")
