@@ -246,7 +246,6 @@ class Rucio:
             for _pfn in instance["pfns"].keys():
                 out.append(
                     {
-                        "adler_32": instance["adler32"],
                         "lfn": instance["name"],
                         "bytes": instance["bytes"],
                         "pfn": _pfn,
