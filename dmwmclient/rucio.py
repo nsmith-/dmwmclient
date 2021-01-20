@@ -289,7 +289,6 @@ class Rucio:
             )
         df = pandas.json_normalize(out)
         return df
-
     async def set_local_account_limit(self, account, rse, nbytes):
         await self.check_token()
         method = "/".join(["accountlimits", "local", account, rse])
