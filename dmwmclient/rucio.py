@@ -5,6 +5,7 @@ import json
 import re
 import logging
 import httpx
+import pandas
 from urllib.parse import quote
 
 
@@ -146,10 +147,48 @@ class Rucio:
         return await self.getjson(f"rules/{rule_id}/analysis", timeout=60)
 
     async def list_did_rules(self, scope, name):
+        """Shows the rules tha apply to a specific did.
+        Parameters
+        ----------
+        name                  name of container, dataset or file.
+        scope                 scope = 'cms'.
+        """
         scope = quote(scope, safe="")
         name = quote(name, safe="")
         method = "/".join(["dids", scope, name, "rules"])
-        return await self.getjson(method)
+        data = await self.getjson(method)
+        out = []
+        for dic in data:
+            rse = dic['rse_expression']#.split('=', 1)[1]
+            out.append(
+                {
+                    'id': dic['id'],
+                    'locks_ok_cnt': dic['locks_ok_cnt'],
+                    'did_type': dic['did_type'],
+                    'weight': dic['weight'],
+                    'purge_replicas': dic['purge_replicas'],
+                    'rse_expression': rse,
+                    'updated_at': dic['updated_at'],
+                    'activity': dic['activity'],
+                    'child_rule_id': dic['child_rule_id'],
+                    'locks_stuck_cnt': dic['locks_stuck_cnt'],
+                    'locks_replicating_cnt': dic['locks_replicating_cnt'],
+                    'copies': dic['copies'],
+                    'comments': dic['comments'],
+                    'split_container': dic['split_container'],
+                    'state': dic['state'],
+                    'scope': dic['scope'],
+                    'subscription_id': dic['subscription_id'],
+                    'stuck_at': dic['stuck_at'],
+                    'expires_at': dic['expires_at'],
+                    'account': dic['account'],
+                    'locked': dic['locked'],
+                    'name': dic['name'],
+                    'grouping': dic['grouping']
+                }
+            )
+        df = pandas.json_normalize(out)
+        return df
 
     async def delete_rule(self, rule_id, purge_replicas=None, immediate=False):
         await self.check_token()
@@ -179,29 +218,87 @@ class Rucio:
         scope = quote(scope, safe="")
         name = quote(name, safe="")
         method = "/".join(["dids", scope, name, "dids"])
-        return await self.getjson(method)
+        data = await self.getjson(method)
+        out = []
+        for key in data:
+            out.append(
+                    {
+                        "adler_32": key["adler32"],
+                        "lfn": key["name"],
+                        "bytes": key["bytes"],
+                        "scope": key["scope"],
+                        "type": key["type"]
+                    }
+                )
+        df = pandas.json_normalize(out)
+        return df
 
     async def list_replicas(self, scope, name):
+        """Shows the file replicas.
+        Parameters
+        ----------
+        name                  name of container, dataset or file.
+        scope                 scope = 'cms'.
+        """
         scope = quote(scope, safe="")
         name = quote(name, safe="")
         method = "/".join(["replicas", scope, name])
-        return await self.getjson(method)
+        data = await self.getjson(method)
+        out = []
+        for instance in data:
+            for _pfn in instance["pfns"].keys():
+                out.append(
+                    {
+                        "adler_32": instance["adler32"],
+                        "lfn": instance["name"],
+                        "bytes": instance["bytes"],
+                        "pfn": _pfn,
+                        "replica": instance["pfns"][_pfn]["rse"],
+                    }
+                )
+        df = pandas.json_normalize(out)
+        return df
 
     async def list_dataset_replicas(self, scope, name):
+        """Shows replicas of datasets (former block in phedex context).
+        Parameters
+        ----------
+        name                  name of the dataset (block in phedex context). This function returns an 
+                              empty dataframe if a name of a container (former dataset in phedex context)
+                              is passed as a parameter instead of the name of a dataset.
+        scope                 scope = 'cms'.
+        """
         scope = quote(scope, safe="")
         name = quote(name, safe="")
         method = "/".join(["replicas", scope, name, "datasets"])
-        return await self.getjson(method)
+        data = await self.getjson(method)
+        out = []
+        for element in data:
+            out.append(
+                {
+                    'accessed_at': element['accessed_at'],
+                    'dataset_name': element['name'],
+                    'rse': element['rse'],
+                    'created_at': element['created_at'],
+                    'Total_bytes': element['bytes'],
+                    'Bytes_at_rse': element['available_bytes'],
+                    'state': element['state'],
+                    'updated_at': element['updated_at'],
+                    'Total_files': element['length'],
+                    'files_at_rse': element['available_length'],
+                    'rse_id': element['rse_id']
+                }
+            )
+        df = pandas.json_normalize(out)
+        return df
+
 
     async def set_local_account_limit(self, account, rse, nbytes):
         await self.check_token()
         method = "/".join(["accountlimits", "local", account, rse])
         data = {"bytes": int(nbytes)}
         request = self.client.build_request(
-            method="POST",
-            url=self.host.join(method),
-            json=data,
-            headers=self._headers,
+            method="POST", url=self.host.join(method), json=data, headers=self._headers,
         )
         result = await self.client.send(request)
         if result.status_code == 201:
