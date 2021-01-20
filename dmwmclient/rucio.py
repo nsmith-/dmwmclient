@@ -144,16 +144,20 @@ class Rucio:
         """
         return await self.getjson(f"rules/{rule_id}/analysis", timeout=60)
 
-    async def list_did_rules(self, scope, name):
+    async def list_did_rules(self, scope, name, json = None):
         """Shows the rules tha apply to a specific did.
         Parameters
         ----------
-        name                  name of container, dataset or file.
-        scope                 scope = 'cms'.
+        name                name of container, dataset or file.
+        scope               scope = 'cms'.
+        json                If True, returns json element. Otherwise, method returns a pandas dataframe.
+                            Default initialization = None.
         """
         scope = quote(scope, safe="")
         name = quote(name, safe="")
         method = "/".join(["dids", scope, name, "rules"])
+        if json == True:
+            return await self.getjson(method)
         data = await self.getjson(method)
         out = []
         for dic in data:
@@ -211,10 +215,20 @@ class Rucio:
                 f"Received {result.status_code} status while deleting rule"
             )
 
-    async def list_content(self, scope, name):
+    async def list_content(self, scope, name, json = None):
+        """List the elements that compose a data element.
+         Parameters
+        ----------
+        name                name of container or dataset.
+        scope               scope = 'cms'.
+        json                If True, returns json element. Otherwise, method returns a pandas dataframe.
+                            Default initialization = None.
+        """
         scope = quote(scope, safe="")
         name = quote(name, safe="")
         method = "/".join(["dids", scope, name, "dids"])
+        if json == True:
+            return await self.getjson(method)
         data = await self.getjson(method)
         out = []
         for key in data:
@@ -230,16 +244,20 @@ class Rucio:
         df = pandas.json_normalize(out)
         return df
 
-    async def list_replicas(self, scope, name):
-        """Shows the file replicas.
+    async def list_replicas(self, scope, name, json = None):
+        """Shows file replicas.
         Parameters
         ----------
         name                  name of container, dataset or file.
         scope                 scope = 'cms'.
+        json                  If True, returns json element. Otherwise, method returns a pandas dataframe.
+                              Default initialization = None.
         """
         scope = quote(scope, safe="")
         name = quote(name, safe="")
         method = "/".join(["replicas", scope, name])
+        if json == True:
+            return await self.getjson(method)
         data = await self.getjson(method)
         out = []
         for instance in data:
@@ -255,7 +273,7 @@ class Rucio:
         df = pandas.json_normalize(out)
         return df
 
-    async def list_dataset_replicas(self, scope, name):
+    async def list_dataset_replicas(self, scope, name, json = None):
         """Shows replicas of datasets (former block in phedex context).
         Parameters
         ----------
@@ -263,10 +281,14 @@ class Rucio:
                             empty dataframe if a name of a container (former dataset in phedex context)
                             is passed as a parameter instead of the name of a dataset.
         scope               scope = 'cms'.
+        json                If True, returns json element. Otherwise, method returns a pandas dataframe.
+                            Default initialization = None.
         """
         scope = quote(scope, safe="")
         name = quote(name, safe="")
         method = "/".join(["replicas", scope, name, "datasets"])
+        if json == True:
+            return await self.getjson(method)
         data = await self.getjson(method)
         out = []
         for element in data:
