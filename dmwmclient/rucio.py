@@ -144,7 +144,7 @@ class Rucio:
         """
         return await self.getjson(f"rules/{rule_id}/analysis", timeout=60)
 
-    async def list_did_rules(self, scope, name, json = None):
+    async def list_did_rules(self, scope, name, json=None):
         """Shows the rules tha apply to a specific did.
         Parameters
         ----------
@@ -156,11 +156,12 @@ class Rucio:
         scope = quote(scope, safe="")
         name = quote(name, safe="")
         method = "/".join(["dids", scope, name, "rules"])
-        if json == True:
+        if json is True:
             return await self.getjson(method)
         data = await self.getjson(method)
         out = []
         for dic in data:
+            rse = dic["rse_expression"]
             out.append(
                 {
                     "id": dic["id"],
@@ -215,7 +216,7 @@ class Rucio:
                 f"Received {result.status_code} status while deleting rule"
             )
 
-    async def list_content(self, scope, name, json = None):
+    async def list_content(self, scope, name, json=None):
         """List the elements that compose a data element.
          Parameters
         ----------
@@ -227,7 +228,7 @@ class Rucio:
         scope = quote(scope, safe="")
         name = quote(name, safe="")
         method = "/".join(["dids", scope, name, "dids"])
-        if json == True:
+        if json is True:
             return await self.getjson(method)
         data = await self.getjson(method)
         out = []
@@ -244,7 +245,7 @@ class Rucio:
         df = pandas.json_normalize(out)
         return df
 
-    async def list_replicas(self, scope, name, json = None):
+    async def list_replicas(self, scope, name, json=None):
         """Shows file replicas.
         Parameters
         ----------
@@ -256,7 +257,7 @@ class Rucio:
         scope = quote(scope, safe="")
         name = quote(name, safe="")
         method = "/".join(["replicas", scope, name])
-        if json == True:
+        if json is True:
             return await self.getjson(method)
         data = await self.getjson(method)
         out = []
@@ -273,11 +274,11 @@ class Rucio:
         df = pandas.json_normalize(out)
         return df
 
-    async def list_dataset_replicas(self, scope, name, json = None):
+    async def list_dataset_replicas(self, scope, name, json=None):
         """Shows replicas of datasets (former block in phedex context).
         Parameters
         ----------
-        name                name of the dataset (block in phedex context). This function returns an 
+        name                name of the dataset (block in phedex context). This function returns an
                             empty dataframe if a name of a container (former dataset in phedex context)
                             is passed as a parameter instead of the name of a dataset.
         scope               scope = 'cms'.
@@ -287,7 +288,7 @@ class Rucio:
         scope = quote(scope, safe="")
         name = quote(name, safe="")
         method = "/".join(["replicas", scope, name, "datasets"])
-        if json == True:
+        if json is True:
             return await self.getjson(method)
         data = await self.getjson(method)
         out = []
@@ -309,6 +310,7 @@ class Rucio:
             )
         df = pandas.json_normalize(out)
         return df
+
     async def set_local_account_limit(self, account, rse, nbytes):
         await self.check_token()
         method = "/".join(["accountlimits", "local", account, rse])
