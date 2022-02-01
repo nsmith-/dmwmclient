@@ -1,3 +1,4 @@
+import datetime
 import logging
 import asyncio
 from itertools import chain
@@ -46,6 +47,15 @@ class RucioSummary:
             usage = await self.client.rucio.getjson(
                 f"accounts/{account}/usage/local/{rse}"
             )
+            if len(usage) == 0:
+                return {
+                    "files": 0,
+                    "used": 0,
+                    "rse": rse,
+                    "free": 0,
+                    "total": 0,
+                    "source": "sync",
+                }
             usage = usage[0]
             return {
                 "files": usage["files"],
@@ -122,7 +132,9 @@ class RucioSummary:
         volume = pd.DataFrame(
             {
                 "Unavailable": usage["used", "unavailable"].fillna(0),
-                "Locked": usage["used", "rucio"] - usage["used", "unavailable"].fillna(0) - usage["used", "expired"].fillna(0),
+                "Locked": usage["used", "rucio"]
+                - usage["used", "unavailable"].fillna(0)
+                - usage["used", "expired"].fillna(0),
                 "Dynamic": usage["used", "expired"] - usage["used", "obsolete"],
                 "Obsolete": usage["used", "obsolete"],
             }
@@ -145,17 +157,20 @@ class RucioSummary:
         rule_volume = usage["used"].filter(account_colors, axis=1).fillna(0)
 
         formatter = EngFormatter(unit="B")
+        timestamp = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
 
-        fig, ax = plt.subplots(figsize=(15, 5))
+        fig, ax = plt.subplots(figsize=(12.2, 6))
         ax.yaxis.set_major_formatter(formatter)
         volume.plot.bar(ax=ax, stacked=True, color=volume_colors, width=0.9)
         rule_volume.plot.bar(ax=ax, color=account_colors, width=0.9)
         ax.set_xlabel("RSE")
         ax.set_ylabel("Used volume")
         ax.legend(title="Source", ncol=3)
-        fig.savefig(f"{self.out}/rucio_summary_absolute.pdf", bbox_inches="tight")
+        fig.tight_layout()
+        fig.text(0.01, 0.01, timestamp, color="grey")
+        fig.savefig(f"{self.out}/rucio_summary_absolute.pdf")
 
-        fig, ax = plt.subplots(figsize=(15, 5))
+        fig, ax = plt.subplots(figsize=(12.2, 6))
         limit = usage["total", "reaper"]
         occupancy = usage["used", "reaper"] / limit
         target = 1 - usage["free", "reaper"] / limit
@@ -179,9 +194,11 @@ class RucioSummary:
         ax.axhline(1, linestyle="dotted", color="black")
         ax.set_ylim(0, 1.5)
         ax.legend(title="Source", ncol=3)
+        fig.tight_layout()
+        fig.text(0.01, 0.01, timestamp, color="grey")
         fig.savefig(f"{self.out}/rucio_summary_relative.pdf", bbox_inches="tight")
 
-        fig, ax = plt.subplots(figsize=(15, 5))
+        fig, ax = plt.subplots(figsize=(12.2, 6))
         mstransferor = (
             account_usage["used", "wmcore_transferor"]
             / account_usage["total", "wmcore_transferor"]
@@ -190,11 +207,15 @@ class RucioSummary:
         ax.set_xlabel("RSE")
         ax.set_ylabel("MSTransferor usage relative to quota")
         ax.axhline(1, linestyle="dotted", color="black")
+        fig.tight_layout()
+        fig.text(0.01, 0.01, timestamp, color="grey")
         fig.savefig(f"{self.out}/rucio_summary_mstransferor.pdf", bbox_inches="tight")
 
-        fig, ax = plt.subplots(figsize=(15, 5))
+        fig, ax = plt.subplots(figsize=(12.2, 6))
         wmaprod = account_usage["used", "wma_prod"] / 1e15
         wmaprod.plot.bar(ax=ax)
         ax.set_xlabel("RSE")
         ax.set_ylabel("WMAgent usage [PB]")
+        fig.tight_layout()
+        fig.text(0.01, 0.01, timestamp, color="grey")
         fig.savefig(f"{self.out}/rucio_summary_wma_prod.pdf", bbox_inches="tight")
