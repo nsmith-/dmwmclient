@@ -44,9 +44,13 @@ class RucioSummary:
 
         async def get_sync_usage(rse):
             account = "sync_" + rse.lower()
-            usage = await self.client.rucio.getjson(
-                f"accounts/{account}/usage/local/{rse}"
-            )
+            try:
+                usage = await self.client.rucio.getjson(
+                    f"accounts/{account}/usage/local/{rse}"
+                )
+            except OSError:
+                # Probably 404 account does not exist
+                usage = []
             if len(usage) == 0:
                 return {
                     "files": 0,
