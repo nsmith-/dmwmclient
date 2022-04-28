@@ -213,7 +213,8 @@ class Rucio:
         result = await self.client.send(request)
         if result.status_code not in [200, 404]:
             raise ValueError(
-                f"Received {result.status_code} status while deleting rule"
+                f"Received {result.status_code} status while deleting rule.\n"
+                f"Message: {result.text}"
             )
 
     async def list_content(self, scope, name, json=None):
