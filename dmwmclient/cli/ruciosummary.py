@@ -127,7 +127,7 @@ class RucioSummary:
             pd.concat(await gather(map(get_account_usage, accounts), 1))
             .set_index(["rse", "source"])
             .unstack()
-            .loc[ddm_rses]
+            .reindex(ddm_rses)
         )
         usage = pd.concat([rse_usage, account_usage], axis=1)
         usage.loc["Total"] = usage.sum()
