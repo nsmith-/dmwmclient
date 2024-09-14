@@ -168,6 +168,7 @@ class RucioSummary:
         volume.plot.bar(ax=ax, stacked=True, color=volume_colors, width=0.9)
         rule_volume.plot.bar(ax=ax, color=account_colors, width=0.9)
         ax.set_xlabel("RSE")
+        ax.set_ylim(0, None)
         ax.set_ylabel("Used volume")
         ax.legend(title="Source", ncol=3)
         fig.tight_layout()
