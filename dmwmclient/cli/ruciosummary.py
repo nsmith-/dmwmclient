@@ -41,6 +41,7 @@ class RucioSummary:
             "rses/", params={"expression": "(rse_type=DISK)&(ddm_quota>0)"}
         )
         ddm_rses = sorted(item["rse"] for item in ddm_rses)
+        assert len(ddm_rses) == len(set(ddm_rses))
 
         async def get_sync_usage(rse):
             account = "sync_" + rse.lower()
@@ -51,6 +52,8 @@ class RucioSummary:
             except OSError:
                 # Probably 404 account does not exist
                 usage = []
+            # why would it not be?!
+            usage = [item for item in usage if item["rse"] == rse]
             if len(usage) == 0:
                 return {
                     "files": 0,
@@ -91,20 +94,17 @@ class RucioSummary:
                 if item["source"] == attr.get("source_for_total_space", "storage"):
                     reaper_info["total"] = item["total"]
             usage.append(reaper_info)
-            usage.append(await get_sync_usage(rse))
+            # usage.append(await get_sync_usage(rse))
             return usage
 
-        rse_usage = (
-            pd.json_normalize(
-                list(chain.from_iterable(await gather(map(get_rse_usage, ddm_rses), 5)))
-            )
-            .set_index(["rse", "source"])
-            .unstack()
-        )
+        data = list(chain.from_iterable(await gather(map(get_rse_usage, ddm_rses), 5)))
+        rse_usage = pd.json_normalize(data).set_index(["rse", "source"]).unstack()
 
         async def get_account_usage(account):
             usage = await self.client.rucio.getjson(f"accounts/{account}/usage/local")
             usage = pd.json_normalize(list(usage))
+            if not len(usage):
+                return pd.DataFrame()
             return pd.DataFrame(
                 {
                     "files": usage["files"],

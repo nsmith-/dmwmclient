@@ -57,7 +57,7 @@ class RESTClient:
         self._client = httpx.AsyncClient(
             cert=usercert,
             verify=certdir,
-            timeout=httpx.Timeout(10.0, read_timeout=30.0),
+            timeout=httpx.Timeout(10.0, read=30.0),
             headers=httpx.Headers({"User-Agent": f"python-dmwmclient/{__version__}"}),
         )
 
@@ -132,12 +132,12 @@ class RESTClient:
     def build_request(self, **params):
         return self._client.build_request(**params)
 
-    async def send(self, request, timeout=None, retries=1):
+    async def send(self, request, retries=1):
         await self.cern_sso_check(request.url.host)
         # Looking forward to https://github.com/encode/httpx/pull/784
         while retries > 0:
             try:
-                result = await self._client.send(request, timeout=timeout)
+                result = await self._client.send(request)
                 if result.status_code == 200 and result.url.host == "login.cern.ch":
                     if await self.cern_sso_check(request.url.host):
                         self._client.cookies.set_cookie_header(request)
@@ -153,9 +153,9 @@ class RESTClient:
             "Exhausted %d retries while executing request %r" % (retries, request)
         )
 
-    async def getjson(self, url, params=None, timeout=None, retries=1):
+    async def getjson(self, url, params=None, retries=1):
         request = self.build_request(method="GET", url=url, params=params)
-        result = await self.send(request, timeout=timeout, retries=retries)
+        result = await self.send(request, retries=retries)
         try:
             return result.json()
         except json.JSONDecodeError:

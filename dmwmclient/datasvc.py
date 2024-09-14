@@ -83,7 +83,6 @@ class DataSvc:
         return df
 
     async def nodes(self, **params):
-
         """Returns a simple dump of phedex nodes.
         Parameters
         ----------
@@ -100,7 +99,6 @@ class DataSvc:
         return df
 
     async def data(self, human_readable=None, **params):
-
         """Shows data which is registered (injected) to phedex
         Parameters
         ----------
@@ -153,7 +151,6 @@ class DataSvc:
             return df
 
     async def errorlog(self, human_readable=None, **params):
-
         """Return detailed transfer error information, including logs of the transfer and validation commands.
         Note that phedex only stores the last 100 errors per link, so more errors may have occurred then indicated by this API
         call.
@@ -207,7 +204,6 @@ class DataSvc:
             return df
 
     async def blockarrive(self, human_readable=None, **params):
-
         """Return estimated time of arrival for blocks currently subscribed for transfer. If the estimated time of arrival (ETA)
         cannot be calculated, or the block will never arrive, a reason for the missing estimate is provided.
         Parameters
@@ -259,7 +255,6 @@ class DataSvc:
             return df
 
     async def filereplicas(self, human_readable=None, **params):
-
         """Serves the file replicas known to phedex.
         Parameters
         ----------
